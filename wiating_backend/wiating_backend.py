@@ -23,7 +23,7 @@ from flask_cors import CORS
 import constants
 
 from elastic import Elasticsearch
-from image_queue import ImageQueue
+from rabbit_queue import RabbitQueue
 
 
 ENV_FILE = find_dotenv()
@@ -190,7 +190,7 @@ def add_image(point_id, sub):
         filename = get_new_file_name(file)
         create_s3_directory(s3_client, point_id)
         upload_file(s3_client, file, os.path.join(point_id, filename))
-        image_queue = ImageQueue(QUEUE_NAME)
+        image_queue = RabbitQueue(QUEUE_NAME)
         image_queue.publish(body=os.path.join(point_id, filename))
         es = Elasticsearch(es_connection_string)
         res = es.add_image(point_id, filename, sub)
