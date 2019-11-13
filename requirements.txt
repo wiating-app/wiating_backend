@@ -6,3 +6,4 @@ six
 rabbit_queue
 auth0-python
 boto3
+elasticsearch

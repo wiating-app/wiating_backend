@@ -20,9 +20,9 @@ from werkzeug.exceptions import HTTPException
 from flask import Flask, jsonify, redirect, render_template, request
 from flask_cors import CORS
 
-import constants
+from . import constants
 
-from elastic import Elasticsearch
+from .elastic import Elasticsearch
 from rabbit_queue import RabbitQueue
 
 
@@ -54,7 +54,7 @@ app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
 CORS(app)
 
-es_connection_string = env.get(constatns.ES_CONNECTION_STRING)
+es_connection_string = env.get(constants.ES_CONNECTION_STRING)
 
 QUEUE_NAME = env.get(constants.IMAGE_RESIZER_QUEUE)
 
