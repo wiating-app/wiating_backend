@@ -3,3 +3,4 @@ python-dotenv
 authlib
 six
 rabbit_queue
+auth0
