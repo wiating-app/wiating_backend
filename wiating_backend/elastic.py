@@ -14,7 +14,7 @@ class Elasticsearch:
     def __init__(self, connection_string, index='wiaty3'):
         self.es = ES([connection_string])
         self.index = index
-        self.fields_to_return = ["name", "description", "location", "type", "water.exists", "water.comment", "fire.exists", "fire.comment", "created_timestamp", "last_modified_timestamp", "images.name", "images.created_timestamp"]
+        self.fields_to_return = ["name", "description", "directions", "location", "type", "water.exists", "water.comment", "fire.exists", "fire.comment", "created_timestamp", "last_modified_timestamp", "images.name", "images.created_timestamp"]
 
     def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None):
         body = {
@@ -25,7 +25,8 @@ class Elasticsearch:
                   "query": phrase,
                   "fields": [
                     "name^3",
-                    "description"
+                    "description",
+                    "directions"
                   ]
                 }
               }]
@@ -56,7 +57,7 @@ class Elasticsearch:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"fire.exists": fire}})
         response = self.es.search(index=self.index, body=body, _source_includes=self.fields_to_return)
         return {'points': response['hits']['hits']}
-	
+
 
     def get_points(self, top_right, bottom_left):
         body = '''{
@@ -89,10 +90,11 @@ class Elasticsearch:
     def get_point(self, point_id):
         return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
 
-    def modify_point(self, point_id, name, description, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
+    def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
         body = self.es.get(index=self.index, id=point_id)['_source']
         body['name'] = name
         body['description'] = description
+        body['directions'] = directions
         body['location']['lat'] = str(lat)
         body['location']['lon'] = str(lon)
         body['type'] = point_type
@@ -113,10 +115,11 @@ class Elasticsearch:
             return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
         return res
 
-    def add_point(self, name, description, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
+    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
         body = {
             "name":  name,
             "description": description,
+            "directions": directions,
             "location": {
                 "lat": str(lat),
                 "lon": str(lon)

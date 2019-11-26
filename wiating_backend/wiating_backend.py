@@ -8,10 +8,9 @@ import boto3
 from botocore.exceptions import ClientError
 import datetime
 from dotenv import load_dotenv, find_dotenv
-import errno
+import flask_monitoringdashboard as dashboard
 from functools import wraps
 import hashlib
-import logging
 import os
 from os import environ as env
 from werkzeug.utils import secure_filename
@@ -52,6 +51,14 @@ app.debug = True
 
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
+
+def group_by_user_sub():
+    return hash(request.headers.get("Authorization", None))
+
+
+dashboard.config.group_by = group_by_user_sub
+dashboard.config.init_from(file=env.get(constants.DASHBOARD_CONFIG_FILE_PATH))
+dashboard.bind(app)
 CORS(app)
 
 es_connection_string = env.get(constatns.ES_CONNECTION_STRING)
@@ -139,9 +146,10 @@ def get_point():
 def add_point(sub):
     req_json = request.json
     es = Elasticsearch(es_connection_string)
-    return es.add_point(name=req_json['name'], description=req_json['description'], lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
-           water_exists=req_json['water_exists'], water_comment=req_json.get('water_comment'), fire_exists=req_json['fire_exists'],
-           fire_comment=req_json.get('fire_comment'), user_sub=sub)
+    return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
+                        lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
+                        water_exists=req_json['water_exists'], water_comment=req_json.get('water_comment'),
+                        fire_exists=req_json['fire_exists'], fire_comment=req_json.get('fire_comment'), user_sub=sub)
 
 
 @app.route('/modify_point', methods=['POST'])
@@ -149,9 +157,11 @@ def add_point(sub):
 def modify_point(sub):
     req_json = request.json
     es = Elasticsearch(es_connection_string)
-    return es.modify_point(point_id=req_json['id'], name=req_json['name'], description=req_json['description'], lat=req_json['lat'], lon=req_json['lon'],
-           point_type=req_json['type'], water_exists=req_json['water_exists'], water_comment=req_json.get('water_comment'), fire_exists=req_json['fire_exists'],
-           fire_comment=req_json.get('fire_comment'), user_sub=sub)
+    return es.modify_point(point_id=req_json['id'], name=req_json['name'], description=req_json['description'],
+                           directions=req_json['directions'], lat=req_json['lat'], lon=req_json['lon'],
+                           point_type=req_json['type'], water_exists=req_json['water_exists'],
+                           water_comment=req_json.get('water_comment'), fire_exists=req_json['fire_exists'],
+                           fire_comment=req_json.get('fire_comment'), user_sub=sub)
 
 
 def create_s3_directory(s3_client, path):
@@ -163,14 +173,16 @@ def create_s3_directory(s3_client, path):
 
 def upload_file(s3_client, file_object, filename):
     try:
-        s3_client.upload_fileobj(file_object, S3_BUCKET, filename, ExtraArgs={'ACL': 'public-read', 'ContentType': file_object.mimetype})
+        s3_client.upload_fileobj(file_object, S3_BUCKET, filename, ExtraArgs={'ACL': 'public-read',
+                                                                              'ContentType': file_object.mimetype})
     except ClientError as e:
         raise
 
 
 def get_new_file_name(image_file):
     timestamp = datetime.datetime.utcnow().strftime("%s")
-    timestamped_filename = hashlib.md5(os.path.join(timestamp + '_' + image_file.filename).encode()).hexdigest() + '.' + image_file.filename.rsplit('.', 1)[1].lower()
+    timestamped_filename = hashlib.md5(os.path.join(timestamp + '_' + image_file.filename).encode()).hexdigest() + '.'\
+                           + image_file.filename.rsplit('.', 1)[1].lower()
     return secure_filename(timestamped_filename)
 
 
