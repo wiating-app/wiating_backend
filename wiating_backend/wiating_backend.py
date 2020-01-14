@@ -38,7 +38,7 @@ AUTH0_AUDIENCE = env.get(constants.AUTH0_AUDIENCE)
 if AUTH0_AUDIENCE is '':
     AUTH0_AUDIENCE = AUTH0_BASE_URL + '/userinfo'
 
-S3_BUCKET = env.get(constants.S3_BUCKET)
+STORE_PROPERTY = env.get(constants.S3_BUCKET)
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 def allowed_file(filename):
@@ -164,19 +164,32 @@ def modify_point(sub):
                            fire_comment=req_json.get('fire_comment'), user_sub=sub)
 
 
-def create_s3_directory(s3_client, path):
-    try:
-        s3_client.put_object(Bucket=S3_BUCKET, Key=(path + '/'))
-    except ClientError as e:
-        raise
+def create_image_directory(path):
+    store_property = STORE_PROPERTY.split('//', 1)[1]
+
+    if STORE_PROPERTY.startswith('file://'):
+        os.mkdir(os.path.join(store_property, path))
+    elif STORE_PROPERTY.startswith('s3://'):
+        try:
+            s3_client = boto3.client('s3')
+            s3_client.put_object(Bucket=store_property, Key=(path + '/'))
+        except ClientError as e:
+            raise
 
 
-def upload_file(s3_client, file_object, filename):
-    try:
-        s3_client.upload_fileobj(file_object, S3_BUCKET, filename, ExtraArgs={'ACL': 'public-read',
-                                                                              'ContentType': file_object.mimetype})
-    except ClientError as e:
-        raise
+
+def upload_file(file_object, filename):
+    store_property = STORE_PROPERTY.split('//', 1)[1]
+
+    if STORE_PROPERTY.startswith('file://'):
+        file_object.save(os.path.join(store_property, filename))
+    elif STORE_PROPERTY.startswith('s3://'):
+        try:
+            s3_client = boto3.client('s3')
+            s3_client.upload_fileobj(file_object, store_property, filename,
+                                     ExtraArgs={'ACL': 'public-read', 'ContentType': file_object.mimetype})
+        except ClientError as e:
+            raise
 
 
 def get_new_file_name(image_file):
@@ -189,6 +202,7 @@ def get_new_file_name(image_file):
 @app.route('/add_image/<point_id>', methods=['POST'])
 @requires_auth
 def add_image(point_id, sub):
+    point_id = secure_filename(point_id)
     # check if the post request has the file part
     if 'file' not in request.files:
         return redirect(request.url)
@@ -198,10 +212,9 @@ def add_image(point_id, sub):
     if file.filename == '':
         return redirect(request.url)
     if file and allowed_file(file.filename):
-        s3_client = boto3.client('s3')
         filename = get_new_file_name(file)
-        create_s3_directory(s3_client, point_id)
-        upload_file(s3_client, file, os.path.join(point_id, filename))
+        create_image_directory(point_id)
+        upload_file(file, os.path.join(point_id, filename))
         image_queue = RabbitQueue(QUEUE_NAME)
         image_queue.publish(body=os.path.join(point_id, filename))
         es = Elasticsearch(es_connection_string)
