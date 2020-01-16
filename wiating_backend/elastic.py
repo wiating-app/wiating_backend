@@ -2,6 +2,7 @@ from elasticsearch import Elasticsearch as ES
 import datetime
 
 
+
 def add_to_or_create_list(location, name, query):
     try:
         location[name]
