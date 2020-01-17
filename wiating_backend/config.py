@@ -27,6 +27,7 @@ class BaseConfig:
 
     SECRET_KEY = env.get(constants.SECRET_KEY)
     ES_CONNECTION_STRING = env.get(constants.ES_CONNECTION_STRING)
+    INDEX_NAME = env.get(constants.INDEX_NAME)
     QUEUE_NAME = env.get(constants.IMAGE_RESIZER_QUEUE)
 
 

@@ -12,14 +12,14 @@ es_connection_string = current_app.config['ES_CONNECTION_STRING']
 @points.route('/get_points', methods=['POST'])
 def get_points():
     boundaries = request.json
-    es = Elasticsearch(es_connection_string)
+    es = Elasticsearch(es_connection_string, index=current_app.config['INDEX_NAME'])
     return es.get_points(boundaries['top_right'], boundaries['bottom_left'])
 
 
 @points.route('/get_point', methods=['POST'])
 def get_point():
     params = request.json
-    es = Elasticsearch(es_connection_string)
+    es = Elasticsearch(es_connection_string, index=current_app.config['INDEX_NAME'])
     return es.get_point(point_id=params['id'])
 
 
@@ -27,7 +27,7 @@ def get_point():
 @requires_auth
 def add_point(sub):
     req_json = request.json
-    es = Elasticsearch(es_connection_string)
+    es = Elasticsearch(es_connection_string, index=current_app.config['INDEX_NAME'])
     return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
                         lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
                         water_exists=req_json['water_exists'], water_comment=req_json.get('water_comment'),
@@ -38,7 +38,7 @@ def add_point(sub):
 @requires_auth
 def modify_point(sub):
     req_json = request.json
-    es = Elasticsearch(es_connection_string)
+    es = Elasticsearch(es_connection_string, index=current_app.config['INDEX_NAME'])
     return es.modify_point(point_id=req_json['id'], name=req_json['name'], description=req_json['description'],
                            directions=req_json['directions'], lat=req_json['lat'], lon=req_json['lon'],
                            point_type=req_json['type'], water_exists=req_json['water_exists'],
@@ -56,5 +56,5 @@ def search_points():
     water = params.get('water', None)
     fire = params.get('fire', None)
 
-    es = Elasticsearch(es_connection_string)
+    es = Elasticsearch(es_connection_string, index=current_app.config['INDEX_NAME'])
     return es.search_points(phrase, point_type, top_right, bottom_left, water, fire)

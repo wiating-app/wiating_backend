@@ -12,7 +12,7 @@ def add_to_or_create_list(location, name, query):
 
 
 class Elasticsearch:
-    def __init__(self, connection_string, index='wiaty3'):
+    def __init__(self, connection_string, index='wiaty'):
         self.es = ES([connection_string])
         self.index = index
         self.fields_to_return = ["name", "description", "directions", "location", "type", "water.exists", "water.comment", "fire.exists", "fire.comment", "created_timestamp", "last_modified_timestamp", "images.name", "images.created_timestamp"]

@@ -35,7 +35,7 @@ def add_image(point_id, sub):
         upload_file(file, os.path.join(point_id, filename))
         image_queue = RabbitQueue(current_app.config['QUEUE_NAME'])
         image_queue.publish(body=os.path.join(point_id, filename))
-        es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'])
+        es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
         res = es.add_image(point_id, filename, sub)
         return res
 
