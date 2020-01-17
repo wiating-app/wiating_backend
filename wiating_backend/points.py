@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app
+from flask import Blueprint, current_app, request
 from .auth import requires_auth
 from .elastic import Elasticsearch
 
