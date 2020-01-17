@@ -11,17 +11,17 @@ from flask_cors import CORS
 
 from . import constants
 from .config import DefaultConfig
+from .image import images
+from .points import points
 
 
 
 def configure_blueprints(app):
     """Configure blueprints in views."""
 
-    from .image import images
-    from .points import points
-
-    for bp in [images, points]:
-        app.register_blueprint(bp)
+    with app.app_context():
+        for bp in [images, points]:
+            app.register_blueprint(bp)
 
 
 def configure_dashboard(app):
