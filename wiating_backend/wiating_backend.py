@@ -45,14 +45,18 @@ def configure_error_handlers(app):
         return response
 
 
-app = Flask(__name__, static_url_path='/public', static_folder='./public')
-configure_app(app, DefaultConfig)
-configure_blueprints(app)
-configure_dashboard(app)
-
-CORS(app)
+def configure_home(app):
+    @app.route('/')
+    def home():
+        return render_template('home.html')
 
 
-@app.route('/')
-def home():
-    return render_template('home.html')
+def create_app(config=DefaultConfig):
+    app = Flask(__name__, static_url_path='/public', static_folder='./public')
+    configure_app(app, config)
+    configure_blueprints(app)
+    configure_dashboard(app)
+    configure_home(app)
+
+    CORS(app)
+    return app

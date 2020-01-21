@@ -6,6 +6,6 @@ __author__ = """Dawid Wolski"""
 __email__ = 'merito123@gmail.com'
 __version__ = '0.1.0'
 
-from .wiating_backend import app
+from .wiating_backend import create_app
 
-__all__ = ['app']
+__all__ = ['create_app']

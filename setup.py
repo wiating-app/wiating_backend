@@ -14,22 +14,16 @@ with open('HISTORY.rst') as history_file:
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-setup_requirements = [ ]
-
-test_requirements = [ ]
 
 setup(
     author="Dawid Wolski",
     author_email='merito123@gmail.com',
-    python_requires='!=2.*, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='!=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
@@ -41,9 +35,6 @@ setup(
     keywords='wiating_backend',
     name='wiating_backend',
     packages=find_packages(include=['wiating_backend', 'wiating_backend.*']),
-    setup_requires=setup_requirements,
-    test_suite='tests',
-    tests_require=test_requirements,
     url='https://github.com/merito/wiating_backend',
     version='0.1.0',
     zip_safe=False,
