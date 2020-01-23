@@ -48,7 +48,10 @@ def create_image_directory(path):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
 
     if current_app.config['STORE_PROPERTY'].startswith('file://'):
-        os.mkdir(os.path.join(store_property, path))
+        try:
+            os.mkdir(os.path.join(store_property, path))
+        except FileExistsError:
+            pass
     elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
         try:
             s3_client = boto3.client('s3')
