@@ -51,7 +51,7 @@ def configure_home(app):
         return render_template('home.html')
 
 
-def create_app(config=DefaultConfig):
+def create_app(config=DefaultConfig()):
     app = Flask(__name__, static_url_path='/public', static_folder='./public')
     configure_app(app, config)
     configure_blueprints(app)
