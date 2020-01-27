@@ -69,6 +69,7 @@ class Elasticsearch:
                 },
                 "filter" : {
                     "geo_bounding_box" : {
+                        "validation_method": "COERCE",
                         "location" : {
                             "top_left" : {
                                 "lat" : ''' + str(top_right['lat']) + ''',
