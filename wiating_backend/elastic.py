@@ -120,7 +120,7 @@ class Elasticsearch:
             body['fire']['comment'] = None
         res = self.es.index(index=self.index, id=point_id, body=body)
         if res['result'] == 'updated':
-            save_backup(datetime.today().strftime('%m_%Y'), old_body, point_id)
+            self.save_backup(datetime.today().strftime('%m_%Y'), old_body, point_id)
             return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
         return res
 
