@@ -95,7 +95,7 @@ class Elasticsearch:
 
     def save_backup(self, index_suffix, body, doc_id):
         body['id'] = doc_id
-        res = self.es.index(index=''.join(self.index, '_', index_suffix), body=body)
+        res = self.es.index(index=''.join((self.index, '_', index_suffix)), body=body)
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
         body = self.es.get(index=self.index, id=point_id)['_source']
