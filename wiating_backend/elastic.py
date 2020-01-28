@@ -1,5 +1,6 @@
+from copy import deepcopy
+from datetime import datetime
 from elasticsearch import Elasticsearch as ES
-import datetime
 
 
 
@@ -92,8 +93,13 @@ class Elasticsearch:
     def get_point(self, point_id):
         return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
 
+    def save_backup(self, index_suffix, body, doc_id):
+        body['id'] = doc_id
+        res = self.es.index(index=self.index + index_suffix, body=body)
+
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
         body = self.es.get(index=self.index, id=point_id)['_source']
+        old_body = deepcopy(body)
         body['name'] = name
         body['description'] = description
         body['directions'] = directions
@@ -102,7 +108,7 @@ class Elasticsearch:
         body['type'] = point_type
         body['water']['exists'] = water_exists
         body['fire']['exists'] = fire_exists
-        body['last_modified_timestamp'] = datetime.datetime.utcnow().strftime("%s")
+        body['last_modified_timestamp'] = datetime.utcnow().strftime("%s")
         body['last_modified_by'] = user_sub
         if water_comment is not None:
             body['water']['comment'] = water_comment
@@ -114,6 +120,7 @@ class Elasticsearch:
             body['fire']['comment'] = None
         res = self.es.index(index=self.index, id=point_id, body=body)
         if res['result'] == 'updated':
+            save_backup(datetime.today().strftime('%m_%Y'), old_body, point_id)
             return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
         return res
 
@@ -133,7 +140,7 @@ class Elasticsearch:
             "fire": {
                 "exists": fire_exists
             },
-            "created_timestamp": datetime.datetime.utcnow().strftime("%s"),
+            "created_timestamp": datetime.utcnow().strftime("%s"),
             "created_by": user_sub
         }
         if water_comment is not None:
@@ -152,7 +159,7 @@ class Elasticsearch:
             images = []
         if not isinstance(images, list):
             images = [images]
-        new_image = {"name": path, "created_timestamp": datetime.datetime.utcnow().strftime("%s"), "created_by": sub}
+        new_image = {"name": path, "created_timestamp": datetime.utcnow().strftime("%s"), "created_by": sub}
         images.append(new_image)
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
         if res['result'] == 'updated':
