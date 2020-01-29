@@ -8,6 +8,7 @@ from werkzeug.exceptions import HTTPException
 
 from flask import Flask, jsonify, redirect, render_template, request
 from flask_cors import CORS
+from flask_gzip import Gzip
 
 from . import constants
 from .image import images
@@ -50,12 +51,17 @@ def configure_home(app):
         return render_template('home.html')
 
 
+def configure_compression(app):
+    app = Gzip(app)
+
+
 def create_app(config):
     app = Flask(__name__, static_url_path='/public', static_folder='./public')
     configure_app(app, config)
     configure_blueprints(app)
     configure_dashboard(app)
     configure_home(app)
+    configure_compression(app)
 
     CORS(app)
     return app
