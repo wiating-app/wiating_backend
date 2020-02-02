@@ -33,4 +33,4 @@ class BaseConfig:
 
 
 class DefaultConfig(BaseConfig):
-    DEBUG = True
+    pass
