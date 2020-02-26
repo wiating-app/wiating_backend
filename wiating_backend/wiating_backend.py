@@ -12,6 +12,7 @@ from flask_gzip import Gzip
 
 from . import constants
 from .image import images
+from .logs import logs
 from .points import points
 
 
@@ -20,7 +21,7 @@ def configure_blueprints(app):
     """Configure blueprints in views."""
 
     with app.app_context():
-        for bp in [images, points]:
+        for bp in [images, logs, points]:
             app.register_blueprint(bp)
 
 

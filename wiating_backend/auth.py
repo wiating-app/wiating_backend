@@ -4,6 +4,7 @@ from flask import current_app, Flask, jsonify, redirect, render_template, reques
 from functools import wraps
 
 
+
 # Error handler
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -44,10 +45,12 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            users = Users(current_app.config['AUTH0_DOMAIN'])
-            user = users.userinfo(get_token_auth_header())
+            a0_users = Users(current_app.config['AUTH0_DOMAIN'])
+            a0_user = a0_users.userinfo(get_token_auth_header())
+            user = {'sub': a0_user.get('sub'),
+                    'role': a0_user[current_app.config['AUTH0_BASE_URL']].get('role')}
         except Auth0Error:
             return redirect('login')
-        return f(*args, **kwargs, sub=user['sub'])
+        return f(*args, **kwargs, user=user)
 
     return decorated

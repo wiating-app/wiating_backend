@@ -19,7 +19,8 @@ images = Blueprint('images', __name__)
 
 @images.route('/add_image/<point_id>', methods=['POST'])
 @requires_auth
-def add_image(point_id, sub):
+def add_image(point_id, user):
+    sub = user['sub']
     point_id = secure_filename(point_id)
     # check if the post request has the file part
     if 'file' not in request.files:

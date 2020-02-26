@@ -23,8 +23,9 @@ def get_point():
 
 @points.route('/add_point', methods=['POST'])
 @requires_auth
-def add_point(sub):
+def add_point(user):
     req_json = request.json
+    sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
                         lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
@@ -34,8 +35,9 @@ def add_point(sub):
 
 @points.route('/modify_point', methods=['POST'])
 @requires_auth
-def modify_point(sub):
+def modify_point(user):
     req_json = request.json
+    sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.modify_point(point_id=req_json['id'], name=req_json['name'], description=req_json['description'],
                            directions=req_json['directions'], lat=req_json['lat'], lon=req_json['lon'],
