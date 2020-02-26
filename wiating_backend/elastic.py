@@ -1,6 +1,8 @@
 from copy import deepcopy
 from datetime import datetime
+from deepdiff import DeepDiff
 from elasticsearch import Elasticsearch as ES
+import re
 
 
 
@@ -16,7 +18,9 @@ class Elasticsearch:
     def __init__(self, connection_string, index='wiaty'):
         self.es = ES([connection_string])
         self.index = index
-        self.fields_to_return = ["name", "description", "directions", "location", "type", "water.exists", "water.comment", "fire.exists", "fire.comment", "created_timestamp", "last_modified_timestamp", "images.name", "images.created_timestamp"]
+        self.fields_to_return = ["name", "description", "directions", "location", "type", "water.exists",
+                                 "water.comment", "fire.exists", "fire.comment", "created_timestamp",
+                                 "last_modified_timestamp", "images.name", "images.created_timestamp"]
 
     def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None):
         body = {
@@ -36,7 +40,8 @@ class Elasticsearch:
           }
         }
         if point_type is not None:
-            add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"type": {"value": point_type}}})
+            add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                  query={"term": {"type": {"value": point_type}}})
         if top_right is not None and bottom_left is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={
                     "geo_bounding_box" : {
@@ -54,7 +59,8 @@ class Elasticsearch:
                 }
             )
         if water is not None:
-            add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"water.exists": water}})
+            add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                  query={"term": {"water.exists": water}})
         if fire is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"fire.exists": fire}})
         response = self.es.search(index=self.index, body=body, _source_includes=self.fields_to_return)
@@ -93,11 +99,26 @@ class Elasticsearch:
     def get_point(self, point_id):
         return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
 
-    def save_backup(self, index_suffix, body, doc_id):
-        body['id'] = doc_id
-        res = self.es.index(index=''.join((self.index, '_', index_suffix)), body=body)
+    def save_backup(self, index_suffix, old_body, new_body, doc_id, user_sub):
+        def extract_key(key):
+            return re.search(r"(?<=(root\['))\w*(?='\])", key)[0]
 
-    def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
+        def iterate_over_diff_output(output):
+            result = dict()
+            for item in output.keys():
+                result[extract_key(item)] = output[item]
+            return result
+
+        document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
+                    "timestamp": datetime.utcnow().strftime("%s"), "name": old_body['name']}
+        diff = DeepDiff(old_body, new_body)
+        document["added"] = iterate_over_diff_output(diff['dictionary_item_added'])
+        document["removed"] = iterate_over_diff_output(diff['dictionary_item_removed'])
+        document["changed"] = iterate_over_diff_output(diff['values_changed'])
+        self.es.index(index=''.join((self.index, index_suffix)), body=document)
+
+    def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
+                     fire_exists, water_comment=None, fire_comment=None):
         body = self.es.get(index=self.index, id=point_id)['_source']
         old_body = deepcopy(body)
         body['name'] = name
@@ -120,11 +141,12 @@ class Elasticsearch:
             body['fire']['comment'] = None
         res = self.es.index(index=self.index, id=point_id, body=body)
         if res['result'] == 'updated':
-            self.save_backup(datetime.today().strftime('%m_%Y'), old_body, point_id)
+            self.save_backup(datetime.today().strftime('_%m_%Y'), old_body, body, point_id, user_sub)
             return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
         return res
 
-    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists, water_comment=None, fire_comment=None):
+    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists,
+                  water_comment=None, fire_comment=None):
         body = {
             "name":  name,
             "description": description,
