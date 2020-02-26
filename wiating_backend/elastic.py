@@ -109,7 +109,7 @@ class Elasticsearch:
                 result[extract_key(item)] = output[item]
             return result
 
-        document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
+        document = {"modified_by": user_sub, "doc_id": doc_id,
                     "timestamp": datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), "name": old_body['name']}
         diff = DeepDiff(old_body, new_body, verbose_level=2,
                         exclude_paths=["root['last_modified_timestamp']","root['last_modified_by']"])
@@ -125,7 +125,7 @@ class Elasticsearch:
         body = {"sort":[{"timestamp": {"order": "desc"}}]}
         if point_id is not None:
             body["query"] = {"bool":{"filter":[{"term": {"doc_id": point_id}}]}}
-        return self.es.search(index=self.index + '_*', body=body)
+        return self.es.search(index=self.index + '_*', body=body)['hits']['hits']
 
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
