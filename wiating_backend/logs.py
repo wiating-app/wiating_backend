@@ -9,7 +9,7 @@ logs = Blueprint('logs', __name__, )
 
 @logs.route('/get_logs', methods=['POST'])
 @requires_auth
-def get_points(user):
+def get_logs(user):
     if user['role'] == 'moderator':
         params = request.json
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
