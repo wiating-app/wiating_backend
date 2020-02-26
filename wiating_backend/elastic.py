@@ -112,9 +112,12 @@ class Elasticsearch:
         document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
                     "timestamp": datetime.utcnow().strftime("%s"), "name": old_body['name']}
         diff = DeepDiff(old_body, new_body)
-        document["added"] = iterate_over_diff_output(diff['dictionary_item_added'])
-        document["removed"] = iterate_over_diff_output(diff['dictionary_item_removed'])
-        document["changed"] = iterate_over_diff_output(diff['values_changed'])
+        if diff.get('dictionary_item_added'):
+            document["added"] = iterate_over_diff_output(diff['dictionary_item_added'])
+        if diff.get('dictionary_item_removed'):
+            document["removed"] = iterate_over_diff_output(diff['dictionary_item_removed'])
+        if diff.get('values_changed'):
+            document["changed"] = iterate_over_diff_output(diff['values_changed'])
         self.es.index(index=''.join((self.index, index_suffix)), body=document)
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
