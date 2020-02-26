@@ -124,7 +124,7 @@ class Elasticsearch:
     def get_logs(self, point_id=None):
         body = {"sort":[{"timestamp": {"order": "desc"}}]}
         if point_id is not None:
-            body["query"] = {"bool":{"filter":[{"term": {"doc_id": point_id}}]}}}
+            body["query"] = {"bool":{"filter":[{"term": {"doc_id": point_id}}]}}
         return self.es.search(index=self.index + '_*', body=body)
 
 
