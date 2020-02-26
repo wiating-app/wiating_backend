@@ -4,7 +4,7 @@ from .elastic import Elasticsearch
 
 
 
-logs = Blueprint('points', __name__, )
+logs = Blueprint('logs', __name__, )
 
 
 @logs.route('/get_logs', methods=['POST'])
