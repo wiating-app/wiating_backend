@@ -13,5 +13,8 @@ def get_logs(user):
     if user['role'] == 'moderator':
         params = request.json
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-        return es.get_logs(point_id=params.get('id'))
+        try:
+            return es.get_logs(point_id=params.get('id'))
+        except AttributeError:
+            return es.get_logs()
     raise Exception("Not allowed")
