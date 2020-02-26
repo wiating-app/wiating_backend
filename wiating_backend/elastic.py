@@ -110,7 +110,7 @@ class Elasticsearch:
             return result
 
         document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
-                    "timestamp": int(datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")), "name": old_body['name']}
+                    "timestamp": datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), "name": old_body['name']}
         diff = DeepDiff(old_body, new_body, verbose_level=2,
                         exclude_paths=["root['last_modified_timestamp']","root['last_modified_by']"])
         if diff.get('dictionary_item_added') is not None:
@@ -122,10 +122,9 @@ class Elasticsearch:
         self.es.index(index=''.join((self.index, index_suffix)), body=document)
 
     def get_logs(self, point_id=None):
-        body = {}
+        body = {"sort":[{"timestamp": {"order": "desc"}}]}
         if point_id is not None:
-            body = {"query":{"bool":{"filter":[{"term": {"doc_id": point_id}}]}},
-                    "sort":[{"timestamp": {"order": "desc"}}]}
+            body["query"] = {"bool":{"filter":[{"term": {"doc_id": point_id}}]}}}
         return self.es.search(index=self.index + '_*', body=body)
 
 
