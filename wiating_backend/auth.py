@@ -45,10 +45,11 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
+            app_metadata_key = 'https://mapa.wiating.eu/app_metadata'
             a0_users = Users(current_app.config['AUTH0_DOMAIN'])
             a0_user = a0_users.userinfo(get_token_auth_header())
             user = {'sub': a0_user.get('sub'),
-                    'role': a0_user[current_app.config['AUTH0_BASE_URL'] + '/app_metadata'].get('role')}
+                    'role': a0_user[app_metadata_key].get('role')}
         except Auth0Error:
             return redirect('login')
         return f(*args, **kwargs, user=user)
