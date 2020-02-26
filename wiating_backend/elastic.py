@@ -111,19 +111,23 @@ class Elasticsearch:
 
         document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
                     "timestamp": datetime.utcnow().strftime("%s"), "name": old_body['name']}
-        diff = DeepDiff(old_body, new_body, verbose_level=2)
-        if diff.get('dictionary_item_added'):
+        diff = DeepDiff(old_body, new_body, verbose_level=2,
+                        exclude_paths=["root['last_modified_timestamp']","root['last_modified_by']"])
+        if diff.get('dictionary_item_added') is not None:
             document["added"] = iterate_over_diff_output(diff['dictionary_item_added'])
-        if diff.get('dictionary_item_removed'):
+        if diff.get('dictionary_item_removed') is not None:
             document["removed"] = iterate_over_diff_output(diff['dictionary_item_removed'])
-        if diff.get('values_changed'):
+        if diff.get('values_changed') is not None:
             document["changed"] = iterate_over_diff_output(diff['values_changed'])
         self.es.index(index=''.join((self.index, index_suffix)), body=document)
 
     def get_logs(self, point_id=None):
-        body = {
+        body = {}
+        if point_id is not None:
+            body = {"query":{"bool":{"filter":[{"term": {"doc_id": point_id}}]}},
+                    "sort":[{"timestamp": {"order": "desc"}}]}
+        return self.es.search(index=self.index + '_*', body=body)
 
-        }
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
                      fire_exists, water_comment=None, fire_comment=None):

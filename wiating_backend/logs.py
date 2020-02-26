@@ -11,5 +11,7 @@ logs = Blueprint('logs', __name__, )
 @requires_auth
 def get_points(user):
     if user['role'] == 'moderator':
-        return {"yes": "yes yes"}
-    return {"no": "no no"}
+        params = request.json
+        es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+        return es.get_logs(point_id=params.get('id'))
+    raise Exception("Not allowed")
