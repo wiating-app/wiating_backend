@@ -110,7 +110,7 @@ class Elasticsearch:
             return result
 
         document = {"added": None, "removed": None, "changed": None, "modified_by": user_sub, "doc_id": doc_id,
-                    "timestamp": datetime.utcnow().strftime("%s"), "name": old_body['name']}
+                    "timestamp": int(datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S")), "name": old_body['name']}
         diff = DeepDiff(old_body, new_body, verbose_level=2,
                         exclude_paths=["root['last_modified_timestamp']","root['last_modified_by']"])
         if diff.get('dictionary_item_added') is not None:
