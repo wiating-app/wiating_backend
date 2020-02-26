@@ -125,7 +125,8 @@ class Elasticsearch:
         body = {"sort":[{"timestamp": {"order": "desc"}}]}
         if point_id is not None:
             body["query"] = {"bool":{"filter":[{"term": {"doc_id": point_id}}]}}
-        return self.es.search(index=self.index + '_*', body=body)['hits']['hits']
+        response = self.es.search(index=self.index + '_*', body=body)
+        return {"logs": response['hits']['hits']}
 
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
