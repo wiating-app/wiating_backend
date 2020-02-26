@@ -14,6 +14,7 @@ from . import constants
 from .image import images
 from .logs import logs
 from .points import points
+from .user_management import user_mgmt
 
 
 
@@ -21,7 +22,7 @@ def configure_blueprints(app):
     """Configure blueprints in views."""
 
     with app.app_context():
-        for bp in [images, logs, points]:
+        for bp in [images, logs, points, user_mgmt]:
             app.register_blueprint(bp)
 
 
