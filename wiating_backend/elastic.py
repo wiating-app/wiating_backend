@@ -121,8 +121,8 @@ class Elasticsearch:
             document["changed"] = iterate_over_diff_output(diff['values_changed'])
         self.es.index(index=''.join((self.index, index_suffix)), body=document)
 
-    def get_logs(self, point_id=None):
-        body = {"sort":[{"timestamp": {"order": "desc"}}]}
+    def get_logs(self, point_id=None, size=25, offset=0):
+        body = {"sort":[{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
         if point_id is not None:
             body['query'] = {'term': {'doc_id.keyword': {'value': point_id}}}
         response = self.es.search(index=self.index + '_*', body=body)
