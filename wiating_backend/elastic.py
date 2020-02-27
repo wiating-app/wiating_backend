@@ -126,7 +126,7 @@ class Elasticsearch:
         if point_id is not None:
             body['query'] = {'term': {'doc_id.keyword': {'value': point_id}}}
         response = self.es.search(index=self.index + '_*', body=body)
-        return {"logs": response['hits']['hits']}
+        return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
 
     def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
