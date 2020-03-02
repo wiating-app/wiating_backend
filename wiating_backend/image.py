@@ -76,7 +76,7 @@ def upload_file(file_object, filename):
 
 
 def get_new_file_name(image_file):
-    timestamp = datetime.datetime.utcnow().strftime("%s")
+    timestamp = datetime.datetime.utcnow().strftime("%s.%f")
     timestamped_filename = hashlib.md5(os.path.join(timestamp + '_' + image_file.filename).encode()).hexdigest() + '.'\
                            + image_file.filename.rsplit('.', 1)[1].lower()
     return secure_filename(timestamped_filename)
