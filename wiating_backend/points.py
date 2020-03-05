@@ -1,14 +1,10 @@
 from flask import Blueprint, current_app, request
 from .auth import requires_auth
-from .elastic import Elasticsearch
+from .elastic import Elasticsearch, NotDefined
 
 
 
 points = Blueprint('points', __name__, )
-
-
-class NotDefined:
-    pass
 
 
 @points.route('/get_points', methods=['POST'])

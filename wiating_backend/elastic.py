@@ -4,8 +4,10 @@ from deepdiff import DeepDiff
 from elasticsearch import Elasticsearch as ES
 import re
 
-from .points import NotDefined
 
+
+class NotDefined:
+    pass
 
 
 def add_to_or_create_list(location, name, query):
