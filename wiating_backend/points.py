@@ -7,6 +7,10 @@ from .elastic import Elasticsearch
 points = Blueprint('points', __name__, )
 
 
+class NotDefined:
+    pass
+
+
 @points.route('/get_points', methods=['POST'])
 def get_points():
     boundaries = request.json
@@ -39,11 +43,15 @@ def modify_point(user):
     req_json = request.json
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.modify_point(point_id=req_json['id'], name=req_json['name'], description=req_json['description'],
-                           directions=req_json['directions'], lat=req_json['lat'], lon=req_json['lon'],
-                           point_type=req_json['type'], water_exists=req_json['water_exists'],
-                           water_comment=req_json.get('water_comment'), fire_exists=req_json['fire_exists'],
-                           fire_comment=req_json.get('fire_comment'), user_sub=sub)
+    return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
+                           description=req_json.get('description', NotDefined()),
+                           directions=req_json.get('directions', NotDefined()),
+                           lat=req_json.get('lat', NotDefined()), lon=req_json.get('lon', NotDefined()),
+                           point_type=req_json.get('type', NotDefined()),
+                           water_exists=req_json.get('water_exists', NotDefined()),
+                           water_comment=req_json.get('water_comment', NotDefined()),
+                           fire_exists=req_json.get('fire_exists', NotDefined()),
+                           fire_comment=req_json.get('fire_comment', NotDefined()), user_sub=sub)
 
 
 @points.route('/search_points', methods=['POST'])

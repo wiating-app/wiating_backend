@@ -4,6 +4,8 @@ from deepdiff import DeepDiff
 from elasticsearch import Elasticsearch as ES
 import re
 
+from .points import NotDefined
+
 
 
 def add_to_or_create_list(location, name, query):
@@ -129,28 +131,22 @@ class Elasticsearch:
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
 
-    def modify_point(self, point_id, name, description, directions, lat, lon, point_type, user_sub, water_exists,
-                     fire_exists, water_comment=None, fire_comment=None):
+    def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
+                     point_type, water_exists, fire_exists, water_comment, fire_comment):
         body = self.es.get(index=self.index, id=point_id)['_source']
         old_body = deepcopy(body)
-        body['name'] = name
-        body['description'] = description
-        body['directions'] = directions
-        body['location']['lat'] = str(lat)
-        body['location']['lon'] = str(lon)
-        body['type'] = point_type
-        body['water']['exists'] = water_exists
-        body['fire']['exists'] = fire_exists
+        body['name'] = name if type(name) != NotDefined else body['name']
+        body['description'] = description if type(description) != NotDefined else body['description']
+        body['directions'] = directions if type(directions) != NotDefined else body['directions']
+        body['location']['lat'] = str(lat) if type(lat) != NotDefined else body['location']['lat']
+        body['location']['lon'] = str(lon) if type(lon) != NotDefined else body['location']['lon']
+        body['type'] = point_type if type(point_type) != NotDefined else body['type']
+        body['water']['exists'] = water_exists if type(water_exists) != NotDefined else body['water']['exists']
+        body['water']['comment'] = water_comment if type(water_comment) != NotDefined else body['water'].get('comment')
+        body['fire']['exists'] = fire_exists if type(fire_exists) != NotDefined else body['fire']['exists']
+        body['fire']['comment'] = fire_comment if type(fire_comment) != NotDefined else body['fire'].get('comment')
         body['last_modified_timestamp'] = datetime.utcnow().strftime("%s")
         body['last_modified_by'] = user_sub
-        if water_comment is not None:
-            body['water']['comment'] = water_comment
-        if fire_comment is not None:
-            body['fire']['comment'] = fire_comment
-        if water_exists is False:
-            body['water']['comment'] = None
-        if fire_exists is False:
-            body['fire']['comment'] = None
         res = self.es.index(index=self.index, id=point_id, body=body)
         if res['result'] == 'updated':
             self.save_backup(datetime.today().strftime('_%m_%Y'), old_body, body, point_id, user_sub)
