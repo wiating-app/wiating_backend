@@ -46,9 +46,8 @@ class Point:
                    last_modified_timestamp=source['last_modified_timestamp'], last_modified_by=source['last_modified_by'],
                    images=source.get('images'), doc_id=body['_id'])
 
-    def to_dict(self):
+    def to_dict(self, with_id=False):
         body = {
-            "id": self.doc_id,
             "name": self.name,
             "description": self.description,
             "directions": self.directions,
@@ -64,6 +63,8 @@ class Point:
             "created_timestamp": self.created_timestamp,
             "last_modified_timestamp": self.last_modified_timestamp,
         }
+        if with_id is True:
+            body["id"] = self.doc_id
         if self.images is not None:
             body['images'] = list()
             for image in self.images:
@@ -143,7 +144,7 @@ class Elasticsearch:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"fire_exists": fire}})
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
-        out_points = [point.to_dict() for point in read_points]
+        out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
 
 
@@ -175,14 +176,13 @@ class Elasticsearch:
     	}'''
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
-        out_points = [point.to_dict() for point in read_points]
+        out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
-        return {'points': response['hits']['hits']}
 
     def get_point(self, point_id):
         response = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=response)
-        return point.to_dict()
+        return point.to_dict(with_id=True)
 
     def get_logs(self, point_id=None, size=25, offset=0):
         body = {"sort":[{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
