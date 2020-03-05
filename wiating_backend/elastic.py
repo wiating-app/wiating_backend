@@ -22,8 +22,8 @@ class Elasticsearch:
     def __init__(self, connection_string, index='wiaty'):
         self.es = ES([connection_string])
         self.index = index
-        self.fields_to_return = ["name", "description", "directions", "location", "type", "water.exists",
-                                 "water.comment", "fire.exists", "fire.comment", "created_timestamp",
+        self.fields_to_return = ["name", "description", "directions", "location", "type", "water_exists",
+                                 "water_comment", "fire_exists", "fire_comment", "created_timestamp",
                                  "last_modified_timestamp", "images.name", "images.created_timestamp"]
 
     def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None):
@@ -64,9 +64,9 @@ class Elasticsearch:
             )
         if water is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter',
-                                  query={"term": {"water.exists": water}})
+                                  query={"term": {"water_exists": water}})
         if fire is not None:
-            add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"fire.exists": fire}})
+            add_to_or_create_list(location=body['query']['bool'], name='filter', query={"term": {"fire_exists": fire}})
         response = self.es.search(index=self.index, body=body, _source_includes=self.fields_to_return)
         return {'points': response['hits']['hits']}
 
@@ -143,10 +143,10 @@ class Elasticsearch:
         body['location']['lat'] = str(lat) if type(lat) != NotDefined else body['location']['lat']
         body['location']['lon'] = str(lon) if type(lon) != NotDefined else body['location']['lon']
         body['type'] = point_type if type(point_type) != NotDefined else body['type']
-        body['water']['exists'] = water_exists if type(water_exists) != NotDefined else body['water']['exists']
-        body['water']['comment'] = water_comment if type(water_comment) != NotDefined else body['water']['comment']
-        body['fire']['exists'] = fire_exists if type(fire_exists) != NotDefined else body['fire']['exists']
-        body['fire']['comment'] = fire_comment if type(fire_comment) != NotDefined else body['fire']['comment']
+        body['water_exists'] = water_exists if type(water_exists) != NotDefined else body['water_exists']
+        body['water_comment'] = water_comment if type(water_comment) != NotDefined else body['water_comment']
+        body['fire_exists'] = fire_exists if type(fire_exists) != NotDefined else body['fire_exists']
+        body['fire_comment'] = fire_comment if type(fire_comment) != NotDefined else body['fire_comment']
         body['last_modified_timestamp'] = datetime.utcnow().strftime("%s")
         body['last_modified_by'] = user_sub
         res = self.es.index(index=self.index, id=point_id, body=body)
@@ -166,14 +166,10 @@ class Elasticsearch:
                 "lon": str(lon)
             },
             "type": point_type,
-            "water": {
-                "exists": water_exists,
-                "comment": water_comment
-            },
-            "fire": {
-                "exists": fire_exists,
-                "comment": fire_comment
-            },
+            "water_exists": water_exists,
+            "water_comment": water_comment,
+            "fire_exists": fire_exists,
+            "fire_comment": fire_comment,
             "created_timestamp": datetime.utcnow().strftime("%s"),
             "created_by": user_sub
         }
