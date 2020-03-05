@@ -54,8 +54,8 @@ def test_changePointLat(point_from_dict):
     assert changes == {'lat': {'new_value': '49', 'old_value': '50.763923'}}
 
 
-def test_pointToDict(point_from_dict):
-    result = point_from_dict.to_dict()
+def test_pointToDictWithId(point_from_dict):
+    result = point_from_dict.to_dict(with_id=True)
     assert result == {"created_timestamp": "1583403492", "description": "EDIT: XII 2018: wiata spalona",
          "directions": "", "fire_comment": None, "fire_exists": None, "images":
              [{"created_timestamp": "1583403492", "name": "f660785da287e72143a5eddf77d37440.jpg"}],
@@ -63,3 +63,13 @@ def test_pointToDict(point_from_dict):
          "name": "G\u00f3ry Wa\u0142brzyskie, masyw Che\u0142mca", "type": "SHED",
          "water_comment": None, "water_exists": None, "last_modified_timestamp": "1583403439",
          "id": "7g5qqnABsqio5qhd0cbc"}
+
+
+def test_pointToDictWithoutId(point_from_dict):
+    result = point_from_dict.to_dict()
+    assert result == {"created_timestamp": "1583403492", "description": "EDIT: XII 2018: wiata spalona",
+         "directions": "", "fire_comment": None, "fire_exists": None, "images":
+             [{"created_timestamp": "1583403492", "name": "f660785da287e72143a5eddf77d37440.jpg"}],
+         "location": {"lat": "50.763923", "lon": "16.180389"},
+         "name": "G\u00f3ry Wa\u0142brzyskie, masyw Che\u0142mca", "type": "SHED",
+         "water_comment": None, "water_exists": None, "last_modified_timestamp": "1583403439"}
