@@ -9,4 +9,3 @@ flask_monitoringdashboard
 boto3
 elasticsearch
 Flask-gzip
-deepdiff
