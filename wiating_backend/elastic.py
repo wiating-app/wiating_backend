@@ -172,7 +172,10 @@ class Elasticsearch:
         },
       	"size": 9000
     	}'''
-        response = self.es.search(index=self.index, body=body, _source_includes=self.fields_to_return)
+        response = self.es.search(index=self.index, body=body)
+        read_points = list(map(Point.from_dict, response['hits']['hits']))
+        out_points = [point.to_dict() for point in read_points]
+        return {'points': out_points}
         return {'points': response['hits']['hits']}
 
     def get_point(self, point_id):
@@ -198,7 +201,7 @@ class Elasticsearch:
         res = self.es.index(index=self.index, id=point_id, body=point.to_dict())
         if res['result'] == 'updated':
             self.save_log(user_sub=user_sub, doc_id=point_id, name=point.name, changed=changes)
-            return self.es.get(index=self.index, id=point_id, _source_includes=self.fields_to_return)
+            return self.get_point(point_id=point_id)
         return res
 
     def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists,
