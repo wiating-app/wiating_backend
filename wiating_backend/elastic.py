@@ -144,9 +144,9 @@ class Elasticsearch:
         body['location']['lon'] = str(lon) if type(lon) != NotDefined else body['location']['lon']
         body['type'] = point_type if type(point_type) != NotDefined else body['type']
         body['water']['exists'] = water_exists if type(water_exists) != NotDefined else body['water']['exists']
-        body['water']['comment'] = water_comment if type(water_comment) != NotDefined else body['water'].get('comment')
+        body['water']['comment'] = water_comment if type(water_comment) != NotDefined else body['water']['comment']
         body['fire']['exists'] = fire_exists if type(fire_exists) != NotDefined else body['fire']['exists']
-        body['fire']['comment'] = fire_comment if type(fire_comment) != NotDefined else body['fire'].get('comment')
+        body['fire']['comment'] = fire_comment if type(fire_comment) != NotDefined else body['fire']['comment']
         body['last_modified_timestamp'] = datetime.utcnow().strftime("%s")
         body['last_modified_by'] = user_sub
         res = self.es.index(index=self.index, id=point_id, body=body)
@@ -167,18 +167,16 @@ class Elasticsearch:
             },
             "type": point_type,
             "water": {
-                "exists": water_exists
+                "exists": water_exists,
+                "comment": water_comment
             },
             "fire": {
-                "exists": fire_exists
+                "exists": fire_exists,
+                "comment": fire_comment
             },
             "created_timestamp": datetime.utcnow().strftime("%s"),
             "created_by": user_sub
         }
-        if water_comment is not None:
-            body['water']['comment'] = water_comment
-        if fire_comment is not None:
-            body['fire']['comment'] = fire_comment
         res = self.es.index(index=self.index, body=body)
         if res['result'] == 'created':
             return self.es.get(index=self.index, id=res['_id'], _source_includes=self.fields_to_return)
