@@ -48,6 +48,7 @@ class Point:
 
     def to_dict(self):
         body = {
+            "id": self.doc_id,
             "name": self.name,
             "description": self.description,
             "directions": self.directions,
