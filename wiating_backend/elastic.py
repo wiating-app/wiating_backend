@@ -123,6 +123,9 @@ class Elasticsearch:
             document["removed"] = iterate_over_diff_output(diff['dictionary_item_removed'])
         if diff.get('values_changed') is not None:
             document["changed"] = iterate_over_diff_output(diff['values_changed'])
+        location_diff = DeepDiff(old_body['location'], new_body['location'], verbose_level=2)
+        if location_diff.get('values_changed') is not None:
+            document["changed"]["location"] = iterate_over_diff_output(location_diff['values_changed'])
         self.es.index(index=''.join((self.index, index_suffix)), body=document)
 
     def get_logs(self, point_id=None, size=25, offset=0):
