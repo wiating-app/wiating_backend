@@ -218,11 +218,9 @@ class Elasticsearch:
 
     def add_image(self, point_id, path, sub):
         try:
-            images = self.es.get(index=self.index, id=point_id, _source=['images'])['_source']['images']
+            images = self.get_point(point_id)['images']
         except KeyError:
             images = []
-        if not isinstance(images, list):
-            images = [images]
         new_image = {"name": path, "created_timestamp": datetime.utcnow().strftime("%s"), "created_by": sub}
         images.append(new_image)
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
