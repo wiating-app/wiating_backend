@@ -71,6 +71,17 @@ class Point:
                 body["images"].append({"name": image['name'], "created_timestamp": image["created_timestamp"]})
         return body
 
+    def to_index(self):
+        body = self.to_dict()
+        body["created_by"] = self.created_by
+        body["last_modified_by"] = self.last_modified_by
+        if self.images is not None:
+            body['images'] = list()
+            for image in self.images:
+                body["images"].append({"name": image['name'], "created_timestamp": image["created_timestamp"],
+                                       "created_by": image['created_by']})
+        return body
+
     def modify(self, name, description, directions, lat, lon, point_type, water_exists, fire_exists, water_comment,
                fire_comment, user_sub):
         params = locals()
@@ -200,7 +211,7 @@ class Elasticsearch:
         changes = point.modify(name=name, description=description, directions=directions, lat=lat, lon=lon,
                                point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                                fire_exists=fire_exists, fire_comment=fire_comment, user_sub=user_sub)
-        res = self.es.index(index=self.index, id=point_id, body=point.to_dict())
+        res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
             self.save_log(user_sub=user_sub, doc_id=point_id, name=point.name, changed=changes)
             return self.get_point(point_id=point_id)
@@ -211,7 +222,7 @@ class Elasticsearch:
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
                       lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                       fire_exists=fire_exists, fire_comment=fire_comment, user_sub=user_sub)
-        res = self.es.index(index=self.index, body=point.to_dict())
+        res = self.es.index(index=self.index, body=point.to_index())
         if res['result'] == 'created':
             self.save_log(user_sub=user_sub, doc_id=res['_id'], name=point.name, changed="created")
             return self.get_point(point_id=res['_id'])
