@@ -224,7 +224,7 @@ class Elasticsearch:
                       fire_exists=fire_exists, fire_comment=fire_comment, user_sub=user_sub)
         res = self.es.index(index=self.index, body=point.to_index())
         if res['result'] == 'created':
-            self.save_log(user_sub=user_sub, doc_id=res['_id'], name=point.name, changed="created")
+            self.save_log(user_sub=user_sub, doc_id=res['_id'], name=point.name, changed={"action": "created"})
             return self.get_point(point_id=res['_id'])
         return res
 
@@ -238,7 +238,8 @@ class Elasticsearch:
         images.append(new_image)
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
         if res['result'] == 'updated':
-            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"new image": new_image})
+            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"action": "new image",
+                                                                                   "image": new_image})
             return self.get_point(point_id=point_id)
         return res
 
