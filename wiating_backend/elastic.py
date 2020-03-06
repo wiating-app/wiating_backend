@@ -229,9 +229,9 @@ class Elasticsearch:
         return res
 
     def add_image(self, point_id, path, sub):
+        point = self.get_point(point_id)
         try:
-            point = self.get_point(point_id)
-            images = point['images']
+            images = point.images
         except KeyError:
             images = []
         new_image = {"name": path, "created_timestamp": datetime.utcnow().strftime("%s"), "created_by": sub}
