@@ -3,8 +3,8 @@ Wiating Backend
 ===============
 
 
-.. image:: https://img.shields.io/travis/wiating/wiating_backend.svg
-        :target: https://travis-ci.org/wiating/wiating_backend
+.. image:: https://img.shields.io/travis/wiating-app/wiating_backend.svg
+        :target: https://travis-ci.org/wiating-app/wiating_backend
 
 
 
