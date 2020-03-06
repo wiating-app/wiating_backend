@@ -75,6 +75,7 @@ class Point:
                fire_comment, user_sub):
         params = locals()
         params.pop('self')
+        params.pop('user_sub')
         changed = dict()
         for param in params.keys():
             if type(params[param]) is not NotDefined:
