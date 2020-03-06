@@ -218,13 +218,15 @@ class Elasticsearch:
 
     def add_image(self, point_id, path, sub):
         try:
-            images = self.get_point(point_id)['images']
+            point = self.get_point(point_id)
+            images = point['images']
         except KeyError:
             images = []
         new_image = {"name": path, "created_timestamp": datetime.utcnow().strftime("%s"), "created_by": sub}
         images.append(new_image)
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
         if res['result'] == 'updated':
+            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"new image": new_image})
             return self.get_point(point_id=point_id)
         return res
 
