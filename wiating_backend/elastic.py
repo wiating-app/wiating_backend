@@ -229,10 +229,10 @@ class Elasticsearch:
         return res
 
     def add_image(self, point_id, path, sub):
-        point = self.get_point(point_id)
-        try:
-            images = point.images
-        except KeyError:
+        body = self.es.get(index=self.index, id=point_id)
+        point = Point.from_dict(body=body)
+        images = point.images
+        if images is None:
             images = []
         new_image = {"name": path, "created_timestamp": datetime.utcnow().strftime("%s"), "created_by": sub}
         images.append(new_image)
