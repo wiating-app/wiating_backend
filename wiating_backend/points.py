@@ -42,7 +42,10 @@ def modify_point(user):
     return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
                            description=req_json.get('description', NotDefined()),
                            directions=req_json.get('directions', NotDefined()),
-                           lat=req_json.get('lat', NotDefined()), lon=req_json.get('lon', NotDefined()),
+                           lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined \
+                               else NotDefined(),
+                           lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined \
+                               else NotDefined(),
                            point_type=req_json.get('type', NotDefined()),
                            water_exists=req_json.get('water_exists', NotDefined()),
                            water_comment=req_json.get('water_comment', NotDefined()),
