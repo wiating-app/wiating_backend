@@ -3,30 +3,16 @@ Wiating Backend
 ===============
 
 
-.. image:: https://img.shields.io/pypi/v/wiating_backend.svg
-        :target: https://pypi.python.org/pypi/wiating_backend
-
-.. image:: https://img.shields.io/travis/merito/wiating_backend.svg
-        :target: https://travis-ci.org/merito/wiating_backend
-
-.. image:: https://readthedocs.org/projects/wiating-backend/badge/?version=latest
-        :target: https://wiating-backend.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
+.. image:: https://img.shields.io/travis/wiating/wiating_backend.svg
+        :target: https://travis-ci.org/wiating/wiating_backend
 
 
 
-
-Python Boilerplate contains all the boilerplate you need to create a Python package.
+Backend for https://mapa.wiating.eu app writen in Python using Flask.
 
 
 * Free software: MIT license
-* Documentation: https://wiating-backend.readthedocs.io.
 
-
-Features
---------
-
-* TODO
 
 Credits
 -------
