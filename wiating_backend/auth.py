@@ -55,3 +55,13 @@ def requires_auth(f):
         return f(*args, **kwargs, user=user)
 
     return decorated
+
+
+def moderator(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if kwargs['user']['role'] == 'moderator':
+            return f(*args, **kwargs)
+        raise Exception("Not allowed")
+
+    return decorated

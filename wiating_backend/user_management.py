@@ -2,7 +2,7 @@ from auth0.v3.management import Auth0
 from auth0.v3.authentication import GetToken
 from flask import Blueprint, current_app, request
 
-from .auth import requires_auth
+from .auth import requires_auth, moderator
 
 
 
@@ -20,13 +20,12 @@ def get_token():
 
 @user_mgmt.route('/ban_user', methods=['POST'])
 @requires_auth
+@moderator
 def ban_user(user):
-    if user['role'] == 'moderator':
-        params = request.json
-        ban_user_id = params['ban_user_id']
-        mgmt_api_token = get_token()
-        auth0 = Auth0(current_app.config['AUTH0_DOMAIN'], mgmt_api_token)
-        body = {"blocked": True}
-        auth0.users.update(ban_user_id, body)
-        return {"status": "success"}
-    raise Exception("Not allowed")
+    params = request.json
+    ban_user_id = params['ban_user_id']
+    mgmt_api_token = get_token()
+    auth0 = Auth0(current_app.config['AUTH0_DOMAIN'], mgmt_api_token)
+    body = {"blocked": True}
+    auth0.users.update(ban_user_id, body)
+    return {"status": "success"}
