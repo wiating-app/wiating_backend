@@ -228,6 +228,13 @@ class Elasticsearch:
             return self.get_point(point_id=res['_id'])
         return res
 
+    def delete_point(self, point_id):
+        res = self.es.delete(index=self.index, id=point_id)
+        if res['result'] == 'deleted':
+            return
+        raise Exception("Can't delete point")
+
+
     def add_image(self, point_id, path, sub):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)

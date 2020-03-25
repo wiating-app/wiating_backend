@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, request
-from .auth import requires_auth
+from .auth import requires_auth, moderator
 from .elastic import Elasticsearch, NotDefined
+from .image import delete_image_directory
 
 
 
@@ -65,3 +66,13 @@ def search_points():
 
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.search_points(phrase, point_type, top_right, bottom_left, water, fire)
+
+
+@points.route('/delete_point', methods=['POST'])
+@requires_auth
+@moderator
+def delete_point():
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    es.delete_point(point_id=params['id'])
+    delete_image_directory(params['id'])

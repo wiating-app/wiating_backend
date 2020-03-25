@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 import datetime
 import hashlib
 import os
+import shutil
 from werkzeug.utils import secure_filename
 
 from flask import Blueprint, current_app, Flask, jsonify, redirect, render_template, request
@@ -45,6 +46,15 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
 
+def delete_image_directory(path):
+    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+
+    if current_app.config['STORE_PROPERTY'].startswith('file://'):
+        shutil.rmtree(os.path.join(store_property, path))
+    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+        # TODO delete S3 directory
+        pass
+
 def create_image_directory(path):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
 
@@ -59,7 +69,6 @@ def create_image_directory(path):
             s3_client.put_object(Bucket=store_property, Key=(path + '/'))
         except ClientError as e:
             raise
-
 
 def upload_file(file_object, filename):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
