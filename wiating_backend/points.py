@@ -71,7 +71,7 @@ def search_points():
 @points.route('/delete_point', methods=['POST'])
 @requires_auth
 @moderator
-def delete_point():
+def delete_point(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     es.delete_point(point_id=params['id'])
