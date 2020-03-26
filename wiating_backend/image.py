@@ -50,7 +50,10 @@ def delete_image_directory(path):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
 
     if current_app.config['STORE_PROPERTY'].startswith('file://'):
-        shutil.rmtree(os.path.join(store_property, path))
+        try:
+            shutil.rmtree(os.path.join(store_property, path))
+        except FileNotFoundError:
+            pass
     elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
         # TODO delete S3 directory
         pass
