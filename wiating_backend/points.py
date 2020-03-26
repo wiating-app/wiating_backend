@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
@@ -76,3 +76,4 @@ def delete_point(user):
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     es.delete_point(point_id=params['id'])
     delete_image_directory(params['id'])
+    return Response(status=200)
