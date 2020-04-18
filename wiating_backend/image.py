@@ -11,7 +11,7 @@ from flask import Blueprint, current_app, Flask, jsonify, redirect, render_templ
 from .auth import requires_auth
 from .elastic import Elasticsearch
 
-from rabbit_queue import RabbitQueue
+from image_resizer import resize_image
 
 
 
@@ -35,8 +35,7 @@ def add_image(point_id, user):
         filename = get_new_file_name(file)
         create_image_directory(point_id)
         upload_file(file, os.path.join(point_id, filename))
-        image_queue = RabbitQueue(current_app.config['QUEUE_NAME'])
-        image_queue.publish(body=os.path.join(point_id, filename))
+        resize_image(body=os.path.join(point_id, filename))
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
         res = es.add_image(point_id, filename, sub)
         return res
