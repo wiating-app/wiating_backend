@@ -35,7 +35,7 @@ def add_image(point_id, user):
         filename = get_new_file_name(file)
         create_image_directory(point_id)
         upload_file(file, os.path.join(point_id, filename))
-        resize_image(body=os.path.join(point_id, filename))
+        resize_image(bodystring=os.path.join(point_id, filename))
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
         res = es.add_image(point_id, filename, sub)
         return res
