@@ -3,16 +3,14 @@ from .auth import requires_auth, moderator
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
 
-
-
 points = Blueprint('points', __name__, )
 
 
 @points.route('/get_points', methods=['POST'])
 def get_points():
-    boundaries = request.json
+    req_json = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.get_points(boundaries['top_right'], boundaries['bottom_left'])
+    return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json['point_type'])
 
 
 @points.route('/get_point', methods=['POST'])

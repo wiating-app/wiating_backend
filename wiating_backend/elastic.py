@@ -2,7 +2,6 @@ from datetime import datetime
 from elasticsearch import Elasticsearch as ES
 
 
-
 class NotDefined:
     pass
 
@@ -31,10 +30,11 @@ class Point:
 
     @classmethod
     def new_point(cls, name, description, directions, lat, lon, point_type, water_exists, fire_exists,
-                 user_sub, water_comment=None, fire_comment=None):
+                  user_sub, water_comment=None, fire_comment=None):
         return cls(name=name, description=description, directions=directions, lat=lat, lon=lon, point_type=point_type,
                    water_exists=water_exists, water_comment=water_comment, fire_exists=fire_exists,
                    fire_comment=fire_comment, created_by=user_sub, last_modified_by=user_sub)
+
     @classmethod
     def from_dict(cls, body):
         source = body['_source']
@@ -43,7 +43,8 @@ class Point:
                    water_exists=source['water_exists'], water_comment=source['water_comment'],
                    fire_exists=source['fire_exists'], fire_comment=source['fire_comment'],
                    created_timestamp=source['created_timestamp'], created_by=source['created_by'],
-                   last_modified_timestamp=source['last_modified_timestamp'], last_modified_by=source['last_modified_by'],
+                   last_modified_timestamp=source['last_modified_timestamp'],
+                   last_modified_by=source['last_modified_by'],
                    images=source.get('images'), doc_id=body['_id'])
 
     def to_dict(self, with_id=False):
@@ -99,7 +100,6 @@ class Point:
         return changed
 
 
-
 def add_to_or_create_list(location, name, query):
     try:
         location[name]
@@ -115,40 +115,41 @@ class Elasticsearch:
 
     def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None):
         body = {
-          "query": {
-            "bool": {
-              "must": [{
-                "multi_match": {
-                  "query": phrase,
-                  "fields": [
-                    "name^3",
-                    "description",
-                    "directions"
-                  ]
+            "query": {
+                "bool": {
+                    "must": [{
+                        "multi_match": {
+                            "query": phrase,
+                            "fields": [
+                                "name^3",
+                                "description",
+                                "directions"
+                            ]
+                        }
+                    }]
                 }
-              }]
             }
-          }
         }
-        if point_type is not None:
-            add_to_or_create_list(location=body['query']['bool'], name='filter',
-                                  query={"term": {"type": {"value": point_type}}})
+        if point_type not in [None, []]:
+            for ptype in point_type:
+                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                      query={"term": {"type": {"value": ptype}}})
         if top_right is not None and bottom_left is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={
-                    "geo_bounding_box" : {
-                        "location" : {
-                            "top_left" : {
-                                "lat" : str(top_right['lat']),
-                                "lon" : str(bottom_left['lon'])
-                            },
-                            "bottom_right" : {
-                                "lat" : str(bottom_left['lat']),
-                                "lon" : str(top_right['lon'])
-                            }
+                "geo_bounding_box": {
+                    "location": {
+                        "top_left": {
+                            "lat": str(top_right['lat']),
+                            "lon": str(bottom_left['lon'])
+                        },
+                        "bottom_right": {
+                            "lat": str(bottom_left['lat']),
+                            "lon": str(top_right['lon'])
                         }
                     }
                 }
-            )
+            }
+                                  )
         if water is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter',
                                   query={"term": {"water_exists": water}})
@@ -159,33 +160,36 @@ class Elasticsearch:
         out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
 
-
-    def get_points(self, top_right, bottom_left):
-        body = '''{
-        "query": {
-            "bool" : {
-                "must" : {
-                    "match_all" : {}
-                },
-                "filter" : {
-                    "geo_bounding_box" : {
-                        "validation_method": "COERCE",
-                        "location" : {
-                            "top_left" : {
-                                "lat" : ''' + str(top_right['lat']) + ''',
-                                "lon" : ''' + str(bottom_left['lon']) + '''
-                            },
-                            "bottom_right" : {
-                                "lat" : ''' + str(bottom_left['lat']) + ''',
-                                "lon" : ''' + str(top_right['lon']) + '''
+    def get_points(self, top_right, bottom_left, point_type=None):
+        body = {
+            "query": {
+                "bool": {
+                    "must": {
+                        "match_all": {}
+                    },
+                    "filter": {
+                        "geo_bounding_box": {
+                            "validation_method": "COERCE",
+                            "location": {
+                                "top_left": {
+                                    "lat": str(top_right['lat']),
+                                    "lon": str(bottom_left['lon'])
+                                },
+                                "bottom_right": {
+                                    "lat": str(bottom_left['lat']),
+                                    "lon": str(top_right['lon'])
+                                }
                             }
                         }
                     }
                 }
-            }
-        },
-      	"size": 9000
-    	}'''
+            },
+            "size": 9000
+        }
+        if point_type not in [None, []]:
+            for ptype in point_type:
+                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                      query={"term": {"type": {"value": ptype}}})
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
         out_points = [point.to_dict(with_id=True) for point in read_points]
@@ -197,12 +201,11 @@ class Elasticsearch:
         return point.to_dict(with_id=True)
 
     def get_logs(self, point_id=None, size=25, offset=0):
-        body = {"sort":[{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
+        body = {"sort": [{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
         if point_id is not None:
             body['query'] = {'term': {'doc_id.keyword': {'value': point_id}}}
         response = self.es.search(index=self.index + '_*', body=body)
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
-
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
                      point_type, water_exists, fire_exists, water_comment, fire_comment):
@@ -220,8 +223,8 @@ class Elasticsearch:
     def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists,
                   water_comment=None, fire_comment=None):
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
-                      lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,
-                      fire_exists=fire_exists, fire_comment=fire_comment, user_sub=user_sub)
+                                lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,
+                                fire_exists=fire_exists, fire_comment=fire_comment, user_sub=user_sub)
         res = self.es.index(index=self.index, body=point.to_index())
         if res['result'] == 'created':
             self.save_log(user_sub=user_sub, doc_id=res['_id'], name=point.name, changed={"action": "created"})
@@ -233,7 +236,6 @@ class Elasticsearch:
         if res['result'] == 'deleted':
             return
         raise Exception("Can't delete point")
-
 
     def add_image(self, point_id, path, sub):
         body = self.es.get(index=self.index, id=point_id)
