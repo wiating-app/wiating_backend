@@ -10,7 +10,7 @@ points = Blueprint('points', __name__, )
 def get_points():
     req_json = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json['point_type'])
+    return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'))
 
 
 @points.route('/get_point', methods=['POST'])
