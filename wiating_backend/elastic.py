@@ -167,7 +167,7 @@ class Elasticsearch:
                     "must": {
                         "match_all": {}
                     },
-                    "filter": {
+                    "filter": [{
                         "geo_bounding_box": {
                             "validation_method": "COERCE",
                             "location": {
@@ -181,7 +181,7 @@ class Elasticsearch:
                                 }
                             }
                         }
-                    }
+                    }]
                 }
             },
             "size": 9000
