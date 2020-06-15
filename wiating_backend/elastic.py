@@ -131,8 +131,9 @@ class Elasticsearch:
             }
         }
         if point_type not in [None, []]:
+            body['query']['bool']['minimum_should_match'] = 1
             for ptype in point_type:
-                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                add_to_or_create_list(location=body['query']['bool'], name='should',
                                       query={"term": {"type": {"value": ptype}}})
         if top_right is not None and bottom_left is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter', query={
@@ -187,8 +188,9 @@ class Elasticsearch:
             "size": 9000
         }
         if point_type not in [None, []]:
+            body['query']['bool']['minimum_should_match'] = 1
             for ptype in point_type:
-                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                add_to_or_create_list(location=body['query']['bool'], name='should',
                                       query={"term": {"type": {"value": ptype}}})
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
