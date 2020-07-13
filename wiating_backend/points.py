@@ -29,7 +29,8 @@ def add_point(user):
     return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
                         lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
                         water_exists=req_json['water_exists'], water_comment=req_json.get('water_comment'),
-                        fire_exists=req_json['fire_exists'], fire_comment=req_json.get('fire_comment'), user_sub=sub)
+                        fire_exists=req_json['fire_exists'], fire_comment=req_json.get('fire_comment'),
+                        is_disabled=req_json.get('is_disabled', False), user_sub=sub)
 
 
 @points.route('/modify_point', methods=['POST'])
@@ -49,21 +50,23 @@ def modify_point(user):
                            water_exists=req_json.get('water_exists', NotDefined()),
                            water_comment=req_json.get('water_comment', NotDefined()),
                            fire_exists=req_json.get('fire_exists', NotDefined()),
-                           fire_comment=req_json.get('fire_comment', NotDefined()), user_sub=sub)
+                           fire_comment=req_json.get('fire_comment', NotDefined()),
+                           is_disabled=req_json.get('is_disabled', NotDefined()), user_sub=sub)
 
 
 @points.route('/search_points', methods=['POST'])
 def search_points():
     params = request.json
     phrase = params['phrase']
-    point_type = params.get('point_type', None)
-    top_right = params.get('top_right', None)
-    bottom_left = params.get('bottom_left', None)
-    water = params.get('water', None)
-    fire = params.get('fire', None)
+    point_type = params.get('point_type')
+    top_right = params.get('top_right')
+    bottom_left = params.get('bottom_left')
+    water = params.get('water')
+    fire = params.get('fire')
+    is_disabled = params.get('is_disabled')
 
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.search_points(phrase, point_type, top_right, bottom_left, water, fire)
+    return es.search_points(phrase, point_type, top_right, bottom_left, water, fire, is_disabled)
 
 
 @points.route('/delete_point', methods=['POST'])
