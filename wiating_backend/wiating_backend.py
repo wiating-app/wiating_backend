@@ -55,7 +55,7 @@ def configure_home(app):
 
 def health_check(app):
     @app.route('/healthz')
-    def home():
+    def healthz():
         return {}, 200
 
 
