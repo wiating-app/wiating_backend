@@ -53,6 +53,12 @@ def configure_home(app):
         return render_template('home.html')
 
 
+def health_check(app):
+    @app.route('/healthz')
+    def home():
+        return {}, 200
+
+
 def configure_compression(app):
     app = Gzip(app)
 
@@ -64,6 +70,7 @@ def create_app(config):
     configure_dashboard(app)
     configure_home(app)
     configure_compression(app)
+    health_check(app)
 
     CORS(app)
     return app
