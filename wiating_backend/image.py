@@ -6,13 +6,12 @@ import os
 import shutil
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, current_app, Flask, jsonify, redirect, render_template, request
+from flask import Blueprint, current_app, Flask, jsonify, redirect, render_template, request, Response
 
-from .auth import requires_auth
+from .auth import moderator, requires_auth
 from .elastic import Elasticsearch
 
 from image_resizer import resize_image
-
 
 
 images = Blueprint('images', __name__)
@@ -41,6 +40,18 @@ def add_image(point_id, user):
         return res
 
 
+@images.route('/delete_image', methods=['POST'])
+@requires_auth
+@moderator
+def delete_image(user):
+    params = request.json
+    sub = user['sub']
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    es.delete_image(point_id=params['id'], image_name=params['image_name'], sub=sub)
+    delete_image_file(point_id=params['id'], image_name=params['image_name'])
+    return Response(status=200)
+
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
 
@@ -57,6 +68,19 @@ def delete_image_directory(path):
         # TODO delete S3 directory
         pass
 
+
+def delete_image_file(point_id, image_name):
+    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+    file_name, file_extension = image_name.rsplit('.', 1)
+
+    if current_app.config['STORE_PROPERTY'].startswith('file://'):
+        os.remove(os.path.join(store_property, point_id, image_name))
+        os.remove(os.path.join(store_property, point_id, file_name + '_m.' + file_extension))
+    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+        # TODO delete S3 images
+        pass
+
+
 def create_image_directory(path):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
 
@@ -71,6 +95,7 @@ def create_image_directory(path):
             s3_client.put_object(Bucket=store_property, Key=(path + '/'))
         except ClientError as e:
             raise
+
 
 def upload_file(file_object, filename):
     store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]

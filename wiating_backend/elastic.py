@@ -262,6 +262,17 @@ class Elasticsearch:
             return self.get_point(point_id=point_id)
         return res
 
+    def delete_image(self, point_id, image_name, sub):
+        body = self.es.get(index=self.index, id=point_id)
+        point = Point.from_dict(body=body)
+        new_images = [image for image in point.images if image['name'] != image_name]
+        res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": new_images}})
+        if res['result'] == 'updated':
+            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"action": "delete image",
+                                                                                   "image_name": image_name})
+            return self.get_point(point_id=point_id)
+        return res
+
     def save_log(self, user_sub, doc_id, name, changed):
         document = {"modified_by": user_sub, "doc_id": doc_id, "changes": changed,
                     "timestamp": datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"), "name": name}
