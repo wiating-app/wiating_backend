@@ -94,8 +94,12 @@ class Point:
         for param in params.keys():
             if type(params[param]) is not NotDefined:
                 if getattr(self, param) != params[param]:
-                    changed[param] = {'old_value': getattr(self, param),
-                                      'new_value': params[param]}
+                    if param == 'point_type':
+                        log_param = 'type'
+                    else:
+                        log_param = param
+                    changed[log_param] = {'old_value': getattr(self, param),
+                                          'new_value': params[param]}
                 setattr(self, param, params[param])
         self.last_modified_by = user_sub
         self.last_modified_timestamp = datetime.utcnow().strftime("%s")
