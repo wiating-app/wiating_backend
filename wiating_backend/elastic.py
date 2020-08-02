@@ -261,8 +261,8 @@ class Elasticsearch:
         images.append(new_image)
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
         if res['result'] == 'updated':
-            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"action": "new image",
-                                                                                   "image": new_image})
+            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"images": {"old_value": None,
+                                                                                   "new_value": path}})
             return self.get_point(point_id=point_id)
         return res
 
@@ -272,8 +272,8 @@ class Elasticsearch:
         new_images = [image for image in point.images if image['name'] != image_name]
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": new_images}})
         if res['result'] == 'updated':
-            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"action": "delete image",
-                                                                                   "image_name": image_name})
+            self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"images": {"old_value": image_name,
+                                                                                   "new_value": None}})
             return self.get_point(point_id=point_id)
         return res
 
