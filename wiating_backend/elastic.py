@@ -220,7 +220,8 @@ class Elasticsearch:
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
     def get_log(self, log_id):
-        response = self.es.get(index=self.index + '_*', id=log_id)
+        body = {"query": {"term": {"_id": log_id}}}
+        response = self.es.search(index=self.index + '_*', body=body)
         return {"log": response['_source']}
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
