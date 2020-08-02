@@ -3,7 +3,6 @@ from .auth import requires_auth, moderator
 from .elastic import Elasticsearch
 
 
-
 logs = Blueprint('logs', __name__, )
 
 
@@ -19,3 +18,12 @@ def get_logs(user):
         return es.get_logs(point_id=params.get('id'), size=size, offset=offset)
     except AttributeError:
         return es.get_logs()
+
+
+@logs.route('/get_log', methods=['POST'])
+@requires_auth
+@moderator
+def get_logs(user):
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    return es.get_log(log_id=params['log_id'])
