@@ -2,6 +2,7 @@ from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
+from .logging import logger
 
 points = Blueprint('points', __name__, )
 
@@ -37,6 +38,7 @@ def add_point(user):
 @requires_auth
 def modify_point(user):
     req_json = request.json
+    logger.info('modify_point')
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
