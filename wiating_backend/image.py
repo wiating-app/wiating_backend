@@ -11,6 +11,7 @@ from flask import Blueprint, current_app, Flask, jsonify, redirect, render_templ
 from .auth import moderator, requires_auth
 from .elastic import Elasticsearch
 
+
 from image_resizer import resize_image
 
 
@@ -34,7 +35,7 @@ def add_image(point_id, user):
         filename = get_new_file_name(file)
         create_image_directory(point_id)
         upload_file(file, os.path.join(point_id, filename))
-        resize_image(body_string=os.path.join(point_id, filename))
+        resize_image.delay(os.path.join(point_id, filename))
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
         res = es.add_image(point_id, filename, sub)
         return res
