@@ -7,8 +7,8 @@ class NotDefined:
 
 
 class Point:
-    def __init__(self, name, description, directions, lat, lon, point_type, water_exists, fire_exists,
-                 created_by, last_modified_by, water_comment=None, fire_comment=None, doc_id=None,
+    def __init__(self, name, description, directions, lat, lon, point_type, created_by, last_modified_by,
+                 water_exists=None, fire_exists=None, water_comment=None, fire_comment=None, doc_id=None,
                  created_timestamp=None, last_modified_timestamp=None, images=None, is_disabled=False):
         self.name = name
         self.description = description
@@ -30,8 +30,8 @@ class Point:
         self.is_disabled = is_disabled
 
     @classmethod
-    def new_point(cls, name, description, directions, lat, lon, point_type, water_exists, fire_exists,
-                  user_sub, water_comment=None, fire_comment=None, is_disabled=False):
+    def new_point(cls, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
+                  fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
         return cls(name=name, description=description, directions=directions, lat=lat, lon=lon, point_type=point_type,
                    water_exists=water_exists, water_comment=water_comment, fire_exists=fire_exists,
                    fire_comment=fire_comment, is_disabled=is_disabled, created_by=user_sub, last_modified_by=user_sub)
@@ -238,8 +238,8 @@ class Elasticsearch:
             return self.get_point(point_id=point_id)
         return res
 
-    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists, fire_exists,
-                  water_comment=None, fire_comment=None, is_disabled=False):
+    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
+                  fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
                                 lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                                 fire_exists=fire_exists, fire_comment=fire_comment, is_disabled=is_disabled,
