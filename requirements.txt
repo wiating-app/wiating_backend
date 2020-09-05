@@ -5,7 +5,6 @@ authlib
 six
 image_resizer @ git+https://github.com/wiating-app/image_resizer.git
 auth0-python
-flask_monitoringdashboard
 boto3
 elasticsearch
 Flask-gzip
