@@ -1,8 +1,7 @@
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
-from flask import current_app, Flask, jsonify, redirect, render_template, request
+from flask import current_app, redirect, request
 from functools import wraps
-
 
 
 # Error handler

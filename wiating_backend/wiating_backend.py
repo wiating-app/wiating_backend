@@ -4,7 +4,7 @@
 """
 from werkzeug.exceptions import HTTPException
 
-from flask import Flask, jsonify, redirect, render_template, request
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from flask_gzip import Gzip
 

@@ -32,12 +32,7 @@ def env_mock(mocker):
 
 
 @pytest.fixture
-def dashboard_mock(mocker):
-    mocker.patch('wiating_backend.wiating_backend.dashboard', autospec=True)
-
-
-@pytest.fixture
-def app(env_mock, dashboard_mock):
+def app(env_mock):
     test_config = BaseConfig()
     app = create_app(test_config)
     return app

@@ -6,7 +6,7 @@ import os
 import shutil
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, current_app, Flask, jsonify, redirect, render_template, request, Response
+from flask import Blueprint, current_app, redirect, request, Response
 
 from .auth import moderator, requires_auth
 from .elastic import Elasticsearch
@@ -94,7 +94,7 @@ def create_image_directory(path):
         try:
             s3_client = boto3.client('s3')
             s3_client.put_object(Bucket=store_property, Key=(path + '/'))
-        except ClientError as e:
+        except ClientError:
             raise
 
 
@@ -108,12 +108,13 @@ def upload_file(file_object, filename):
             s3_client = boto3.client('s3')
             s3_client.upload_fileobj(file_object, store_property, filename,
                                      ExtraArgs={'ACL': 'public-read', 'ContentType': file_object.mimetype})
-        except ClientError as e:
+        except ClientError:
             raise
 
 
 def get_new_file_name(image_file):
     timestamp = datetime.datetime.utcnow().strftime("%s.%f")
-    timestamped_filename = hashlib.md5(os.path.join(timestamp + '_' + image_file.filename).encode()).hexdigest() + '.'\
-                           + image_file.filename.rsplit('.', 1)[1].lower()
+    file_name = os.path.join(timestamp + '_' + image_file.filename).encode()
+    file_extension = image_file.filename.rsplit('.', 1)[1].lower()
+    timestamped_filename = '.'.join((hashlib.md5(file_name).hexdigest(), file_extension))
     return secure_filename(timestamped_filename)

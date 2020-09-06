@@ -42,7 +42,7 @@ def test_changePointName(point_from_dict):
     changes = point_from_dict.modify(name="changed name", description=NotDefined(), directions=NotDefined(),
                                      lat=NotDefined(), lon=NotDefined(), point_type=NotDefined(),
                                      water_exists=NotDefined(), fire_exists=NotDefined(), water_comment=NotDefined(),
-                                     fire_comment=NotDefined(), user_sub=NotDefined())
+                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined())
     assert changes == {'name': {'new_value': 'changed name', 'old_value': 'Góry Wałbrzyskie, masyw Chełmca'}}
 
 
@@ -50,7 +50,7 @@ def test_changePointLat(point_from_dict):
     changes = point_from_dict.modify(name=NotDefined(), description=NotDefined(), directions=NotDefined(),
                                      lat="49", lon=NotDefined(), point_type=NotDefined(),
                                      water_exists=NotDefined(), fire_exists=NotDefined(), water_comment=NotDefined(),
-                                     fire_comment=NotDefined(), user_sub=NotDefined())
+                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined())
     assert changes == {'lat': {'new_value': '49', 'old_value': '50.763923'}}
 
 
@@ -62,7 +62,7 @@ def test_pointToDictWithId(point_from_dict):
          "location": {"lat": "50.763923", "lon": "16.180389"},
          "name": "G\u00f3ry Wa\u0142brzyskie, masyw Che\u0142mca", "type": "SHED",
          "water_comment": None, "water_exists": None, "last_modified_timestamp": "1583403439",
-         "id": "7g5qqnABsqio5qhd0cbc"}
+         "id": "7g5qqnABsqio5qhd0cbc", "is_disabled": False}
 
 
 def test_pointToDictWithoutId(point_from_dict):
@@ -72,4 +72,4 @@ def test_pointToDictWithoutId(point_from_dict):
              [{"created_timestamp": "1583403492", "name": "f660785da287e72143a5eddf77d37440.jpg"}],
          "location": {"lat": "50.763923", "lon": "16.180389"},
          "name": "G\u00f3ry Wa\u0142brzyskie, masyw Che\u0142mca", "type": "SHED",
-         "water_comment": None, "water_exists": None, "last_modified_timestamp": "1583403439"}
+         "water_comment": None, "water_exists": None, "last_modified_timestamp": "1583403439", "is_disabled": False}

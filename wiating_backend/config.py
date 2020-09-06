@@ -3,10 +3,10 @@ from os import environ as env
 from . import constants
 
 
-
 ENV_FILE = find_dotenv()
 if ENV_FILE:
     load_dotenv(ENV_FILE)
+
 
 class BaseConfig:
     def __init__(self):

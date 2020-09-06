@@ -5,7 +5,6 @@ from flask import Blueprint, current_app, request
 from .auth import requires_auth, moderator
 
 
-
 user_mgmt = Blueprint('user_mgmt', __name__, )
 
 
