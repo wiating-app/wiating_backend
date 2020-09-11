@@ -1,5 +1,6 @@
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
+from wiating_backend.constants import APP_METADATA_KEY
 from flask import current_app, redirect, request
 from functools import wraps
 
@@ -44,12 +45,11 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            app_metadata_key = 'https://mapa.wiating.eu/app_metadata'
             a0_users = Users(current_app.config['AUTH0_DOMAIN'])
             a0_user = a0_users.userinfo(get_token_auth_header())
             user = {'sub': a0_user.get('sub')}
-            if a0_user.get(app_metadata_key):
-                user['role'] = a0_user.get(app_metadata_key).get('role')
+            if a0_user.get(APP_METADATA_KEY):
+                user['role'] = a0_user.get(APP_METADATA_KEY).get('role')
         except Auth0Error:
             return redirect('login')
         return f(*args, **kwargs, user=user)
@@ -60,8 +60,11 @@ def requires_auth(f):
 def moderator(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        if kwargs['user']['role'] == 'moderator':
-            return f(*args, **kwargs)
-        raise Exception("Not allowed")
+        try:
+            if kwargs['user']['role'] == 'moderator':
+                return f(*args, **kwargs)
+        except KeyError:
+            raise AuthError("Not allowed", 403)
+        raise AuthError("Not allowed", 403)
 
     return decorated

@@ -1,6 +1,6 @@
 from flask import current_app, Response, url_for
 import pytest
-
+from unittest.mock import MagicMock
 
 
 @pytest.fixture
@@ -28,3 +28,23 @@ def test_post_get_points(client, elastic_mock):
     res = client.post(url_for('points.get_points'), json={'top_right': 1, 'bottom_left': 2})
     assert res.status_code == 200
     assert res.json == {'a': '3'}
+
+
+def test_search_points(client, elastic_mock):
+    search_points_mock = MagicMock(return_value={"some": "value"})
+    elastic_mock.return_value.search_points = search_points_mock
+    res = client.post(url_for('points.search_points'),
+                      json={
+                          "phrase": "some phrase",
+                          "point_type": "some type",
+                          "top_right": "top right",
+                          "bottom_left": "bottom left",
+                          "water": "water",
+                          "fire": "fire",
+                          "is_disabled": "is disabled"
+                      }
+    )
+    assert res.json == {"some": "value"}
+    search_points_mock.assert_called_with(phrase="some phrase", point_type="some type", top_right="top right",
+                                          bottom_left="bottom left", water="water", fire="fire",
+                                          is_disabled="is disabled")

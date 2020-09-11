@@ -68,7 +68,8 @@ def search_points():
     is_disabled = params.get('is_disabled')
 
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.search_points(phrase, point_type, top_right, bottom_left, water, fire, is_disabled)
+    return es.search_points(phrase=phrase, point_type=point_type, top_right=top_right, bottom_left=bottom_left,
+                            water=water, fire=fire, is_disabled=is_disabled)
 
 
 @points.route('/delete_point', methods=['POST'])
