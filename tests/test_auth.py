@@ -73,8 +73,8 @@ def auth0_users_raises(mocker):
 
 def test_requires_auth_unauthorized(auth0_users_raises, client):
     client.get(url_for('points.get_point'), headers=[('Authorization', 'Bearer 123abc')])
-    unauthorized = requires_auth_decorated()
-    assert unauthorized.status_code == 401
+    forbidden = requires_auth_decorated()
+    assert forbidden.status_code == 403
 
 
 @moderator
@@ -87,21 +87,21 @@ def test_moderator_decorator_success():
 
 
 def test_moderator_decorator_wrong_role_name():
-    with pytest.raises(AuthError):
-        some_function(user={'role': 'admin'})
+    res = some_function(user={'role': 'admin'})
+    res.status_code = 403
 
 
 def test_moderator_decorator_wrong_key():
-    with pytest.raises(AuthError):
-        some_function(user={'abc': 'def'})
+    res = some_function(user={'abc': 'def'})
+    res.status_code = 403
 
 
 def test_moderator_decorator_empty_dict():
-    with pytest.raises(AuthError):
-        some_function(user={})
+    res = some_function(user={})
+    res.status_code = 403
 
 
 def test_moderator_decorator_no_kwargs():
-    with pytest.raises(AuthError):
-        some_function()
+    res = some_function()
+    res.status_code = 403
 

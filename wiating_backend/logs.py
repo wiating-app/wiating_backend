@@ -29,4 +29,4 @@ def get_log(user):
     try:
         return es.get_log(log_id=params['log_id'])
     except IndexError:
-        return Response(status=404)
+        return Response("Log not found", 404)
