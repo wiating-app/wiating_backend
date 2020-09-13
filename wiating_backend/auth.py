@@ -50,7 +50,7 @@ def requires_auth(f):
             user = {'sub': a0_user.get('sub')}
             if a0_user.get(APP_METADATA_KEY):
                 user['role'] = a0_user.get(APP_METADATA_KEY).get('role')
-        except Auth0Error:
+        except (Auth0Error, AuthError):
             return redirect('login')
         return f(*args, **kwargs, user=user)
 
