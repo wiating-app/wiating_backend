@@ -1,6 +1,7 @@
+from auth0.v3 import Auth0Error
 from auth0.v3.management import Auth0
 from auth0.v3.authentication import GetToken
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, request, Response
 
 from .auth import requires_auth, moderator
 
@@ -26,5 +27,8 @@ def ban_user(user):
     mgmt_api_token = get_token()
     auth0 = Auth0(current_app.config['AUTH0_DOMAIN'], mgmt_api_token)
     body = {"blocked": True}
-    auth0.users.update(ban_user_id, body)
+    try:
+        auth0.users.update(ban_user_id, body)
+    except Auth0Error:
+        return Response(status=403)
     return {"status": "success"}
