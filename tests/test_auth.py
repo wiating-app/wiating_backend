@@ -71,10 +71,10 @@ def auth0_users_raises(mocker):
     return auth0_mock
 
 
-def test_requires_auth_redirect(auth0_users_raises, client):
+def test_requires_auth_unauthorized(auth0_users_raises, client):
     client.get(url_for('points.get_point'), headers=[('Authorization', 'Bearer 123abc')])
-    redirection = requires_auth_decorated()
-    assert redirection.status_code == 302
+    unauthorized = requires_auth_decorated()
+    assert unauthorized.status_code == 401
 
 
 @moderator

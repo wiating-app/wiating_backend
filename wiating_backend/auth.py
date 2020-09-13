@@ -1,7 +1,7 @@
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
 from wiating_backend.constants import APP_METADATA_KEY
-from flask import current_app, redirect, request
+from flask import current_app, redirect, request, Response
 from functools import wraps
 
 
@@ -50,8 +50,10 @@ def requires_auth(f):
             user = {'sub': a0_user.get('sub')}
             if a0_user.get(APP_METADATA_KEY):
                 user['role'] = a0_user.get(APP_METADATA_KEY).get('role')
-        except (Auth0Error, AuthError):
-            return redirect('login')
+        except Auth0Error:
+            return AuthError("Unauthorized", 401)
+        except AuthError as e:
+            return e
         return f(*args, **kwargs, user=user)
 
     return decorated
@@ -64,7 +66,7 @@ def moderator(f):
             if kwargs['user']['role'] == 'moderator':
                 return f(*args, **kwargs)
         except KeyError:
-            raise AuthError("Not allowed", 403)
-        raise AuthError("Not allowed", 403)
+            raise AuthError("Not allowed", 401)
+        raise AuthError("Not allowed", 401)
 
     return decorated
