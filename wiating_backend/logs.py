@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
 from .elastic import Elasticsearch
 
@@ -26,4 +26,7 @@ def get_logs(user):
 def get_log(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.get_log(log_id=params['log_id'])
+    try:
+        return es.get_log(log_id=params['log_id'])
+    except KeyError:
+        return Response(status=404)
