@@ -28,5 +28,5 @@ def get_log(user):
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     try:
         return es.get_log(log_id=params['log_id'])
-    except KeyError:
+    except IndexError:
         return Response(status=404)
