@@ -6,6 +6,16 @@ from .elastic import Elasticsearch
 logs = Blueprint('logs', __name__, )
 
 
+@logs.route('/get_user_logs', methods=['POST'])
+@requires_auth
+def get_user_logs(user):
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    size = params.get('size', 25)
+    offset = params.get('offset', 0)
+    return es.get_user_logs(user=user['sub'], size=size, offset=offset)
+
+
 @logs.route('/get_logs', methods=['POST'])
 @requires_auth
 @moderator

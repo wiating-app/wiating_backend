@@ -212,6 +212,22 @@ class Elasticsearch:
         point = Point.from_dict(body=response)
         return point.to_dict(with_id=True)
 
+    def get_user_logs(self, user, size=25, offset=0):
+        body = {
+            "query": {
+                'term': {
+                    'modified_by.keyword':
+                        {'value': user}
+                }
+            },
+            "sort":
+                [{"timestamp": {"order": "desc"}}],
+            "from": offset,
+            "size": size
+        }
+        response = self.es.search(index=self.index + '_*', body=body)
+        return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
+
     def get_logs(self, point_id=None, size=25, offset=0):
         body = {"sort": [{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
         if point_id is not None:
