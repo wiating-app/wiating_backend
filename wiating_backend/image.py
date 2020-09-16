@@ -22,7 +22,6 @@ images = Blueprint('images', __name__)
 @requires_auth
 def add_image(point_id, user):
     sub = user['sub']
-    point_id = secure_filename(point_id)
     # check if the post request has the file part
     if 'file' not in request.files:
         return redirect(request.url)
@@ -37,8 +36,11 @@ def add_image(point_id, user):
         upload_file(file, os.path.join(point_id, filename))
         resize_image.delay(os.path.join(point_id, filename))
         es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-        res = es.add_image(point_id, filename, sub)
-        return res
+        try:
+            res = es.add_image(point_id, filename, sub)
+            return res
+        except KeyError:
+            return Response(status=400)
 
 
 @images.route('/delete_image', methods=['POST'])
