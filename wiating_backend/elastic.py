@@ -7,7 +7,7 @@ class NotDefined:
 
 
 class Point:
-    def __init__(self, name, description, directions, lat, lon, point_type, created_by, last_modified_by,
+    def __init__(self, name, description, lat, lon, point_type, created_by, last_modified_by, directions=None,
                  water_exists=None, fire_exists=None, water_comment=None, fire_comment=None, doc_id=None,
                  created_timestamp=None, last_modified_timestamp=None, images=None, is_disabled=False):
         self.name = name
@@ -30,7 +30,7 @@ class Point:
         self.is_disabled = is_disabled
 
     @classmethod
-    def new_point(cls, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
+    def new_point(cls, name, description, lat, lon, point_type, user_sub, directions=None, water_exists=None,
                   fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
         return cls(name=name, description=description, directions=directions, lat=lat, lon=lon, point_type=point_type,
                    water_exists=water_exists, water_comment=water_comment, fire_exists=fire_exists,
@@ -254,7 +254,7 @@ class Elasticsearch:
             return self.get_point(point_id=point_id)
         return res
 
-    def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
+    def add_point(self, name, description, lat, lon, point_type, user_sub, directions=None, water_exists=None,
                   fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
                                 lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,

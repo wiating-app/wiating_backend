@@ -27,8 +27,8 @@ def add_point(user):
     req_json = request.json
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
-                        lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
+    return es.add_point(name=req_json['name'], description=req_json['description'], lat=req_json['lat'],
+                        lon=req_json['lon'], point_type=req_json['type'], directions=req_json.get('directions'),
                         water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
                         fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
                         is_disabled=req_json.get('is_disabled', False), user_sub=sub)
