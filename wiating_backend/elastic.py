@@ -250,7 +250,8 @@ class Elasticsearch:
                                user_sub=user_sub)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
-            self.save_log(user_sub=user_sub, doc_id=point_id, name=point.name, changed=changes)
+            if changes != {}:
+                self.save_log(user_sub=user_sub, doc_id=point_id, name=point.name, changed=changes)
             return self.get_point(point_id=point_id)
         return res
 
