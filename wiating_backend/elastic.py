@@ -278,7 +278,7 @@ class Elasticsearch:
     def report_moderator(self, point_id, report_reason):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)
-        point.report_reason_append(report_reason=report_reason)
+        point.report_reason_replace(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
             return True
@@ -286,7 +286,7 @@ class Elasticsearch:
     def report_regular(self, point_id, report_reason):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)
-        point.report_reason_replace(report_reason=report_reason)
+        point.report_reason_append(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
             return True
