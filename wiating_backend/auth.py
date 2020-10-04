@@ -1,6 +1,6 @@
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
-from wiating_backend.constants import APP_METADATA_KEY
+from wiating_backend.constants import APP_METADATA_KEY, MODERATOR
 from flask import current_app, request, Response
 from functools import wraps
 
@@ -63,7 +63,7 @@ def moderator(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            if kwargs['user']['role'] == 'moderator':
+            if kwargs['user']['role'] == MODERATOR:
                 return f(*args, **kwargs)
         except KeyError:
             return Response("Forbidden", 403)

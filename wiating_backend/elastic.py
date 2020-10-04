@@ -9,7 +9,8 @@ class NotDefined:
 class Point:
     def __init__(self, name, description, directions, lat, lon, point_type, created_by, last_modified_by,
                  water_exists=None, fire_exists=None, water_comment=None, fire_comment=None, doc_id=None,
-                 created_timestamp=None, last_modified_timestamp=None, images=None, is_disabled=False):
+                 created_timestamp=None, last_modified_timestamp=None, images=None, is_disabled=False,
+                 report_reason=None):
         self.name = name
         self.description = description
         self.directions = directions
@@ -28,6 +29,7 @@ class Point:
         self.last_modified_by = last_modified_by
         self.images = images
         self.is_disabled = is_disabled
+        self.report_reason = report_reason
 
     @classmethod
     def new_point(cls, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
@@ -45,8 +47,9 @@ class Point:
                    fire_exists=source['fire_exists'], fire_comment=source['fire_comment'],
                    created_timestamp=source['created_timestamp'], created_by=source['created_by'],
                    last_modified_timestamp=source['last_modified_timestamp'],
-                   last_modified_by=source['last_modified_by'],
-                   images=source.get('images'), is_disabled=source.get('is_disabled', False), doc_id=body['_id'])
+                   last_modified_by=source['last_modified_by'], images=source.get('images'),
+                   is_disabled=source.get('is_disabled', False), report_reason=source.get('report_reason'),
+                   doc_id=body['_id'])
 
     def to_dict(self, with_id=False):
         body = {
@@ -63,6 +66,7 @@ class Point:
             "fire_exists": self.fire_exists,
             "fire_comment": self.fire_comment,
             "is_disabled": self.is_disabled,
+            "report_reason": self.report_reason,
             "created_timestamp": self.created_timestamp,
             "last_modified_timestamp": self.last_modified_timestamp,
         }
@@ -86,7 +90,7 @@ class Point:
         return body
 
     def modify(self, name, description, directions, lat, lon, point_type, water_exists, fire_exists, water_comment,
-               fire_comment, is_disabled, user_sub):
+               fire_comment, is_disabled, report_reason, user_sub):
         params = locals()
         params.pop('self')
         params.pop('user_sub')
@@ -105,6 +109,15 @@ class Point:
         self.last_modified_timestamp = datetime.utcnow().strftime("%s")
         return changed
 
+    def report_reason_append(self, report_reason):
+        try:
+            self.report_reason.append(report_reason)
+        except AttributeError:
+            self.report_reason = [report_reason]
+
+    def report_reason_replace(self, report_reason):
+        self.report_reason = [report_reason]
+
 
 def add_to_or_create_list(location, name, query):
     try:
@@ -120,7 +133,7 @@ class Elasticsearch:
         self.index = index
 
     def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None,
-                      is_disabled=None):
+                      is_disabled=None, report_reason=None):
         body = {
             "query": {
                 "bool": {
@@ -166,6 +179,13 @@ class Elasticsearch:
         if is_disabled is not None:
             add_to_or_create_list(location=body['query']['bool'], name='filter',
                                   query={"term": {"is_disabled": is_disabled}})
+        if report_reason is not None:
+            if report_reason:
+                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                      query={"exists": {"field": "report_reason"}})
+            else:
+                add_to_or_create_list(location=body['query']['bool'], name='must_not',
+                                      query={"exists": {"field": "report_reason"}})
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
         out_points = [point.to_dict(with_id=True) for point in read_points]
@@ -255,6 +275,20 @@ class Elasticsearch:
             return self.get_point(point_id=point_id)
         return res
 
+    def report_moderator(self, point_id, report_reason):
+        body = self.es.get(index=self.index, id=point_id)
+        point = Point.from_dict(body=body)
+        point.report_reason_append(report_reason=report_reason)
+        res = self.es.index(index=self.index, id=point_id, body=point.to_index())
+        return res
+
+    def report_regular(self, point_id, report_reason):
+        body = self.es.get(index=self.index, id=point_id)
+        point = Point.from_dict(body=body)
+        point.report_reason_replace(report_reason=report_reason)
+        res = self.es.index(index=self.index, id=point_id, body=point.to_index())
+        return res
+
     def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
                   fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
@@ -284,7 +318,7 @@ class Elasticsearch:
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": images}})
         if res['result'] == 'updated':
             self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"images": {"old_value": None,
-                                                                                   "new_value": path}})
+                                                                                              "new_value": path}})
             return self.get_point(point_id=point_id)
         return res
 
@@ -295,7 +329,7 @@ class Elasticsearch:
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": new_images}})
         if res['result'] == 'updated':
             self.save_log(user_sub=sub, doc_id=point_id, name=point.name, changed={"images": {"old_value": image_name,
-                                                                                   "new_value": None}})
+                                                                                              "new_value": None}})
             return self.get_point(point_id=point_id)
         return res
 

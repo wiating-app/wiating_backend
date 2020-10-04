@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
+from .constants import MODERATOR
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
 from .logging import logger
@@ -81,3 +82,16 @@ def delete_point(user):
     es.delete_point(point_id=params['id'])
     delete_image_directory(params['id'])
     return Response(status=200)
+
+
+@points.route('/report', methods=['POST'])
+@requires_auth
+def report(user):
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    try:
+        if user.get('role') == MODERATOR:
+            return es.report_moderator(params['id'], params['report_reason'])
+        return es.report_regular(params['id'], params['report_reason'])
+    except AttributeError:
+        return Response(status=400, response="Report reason and location ID required")
