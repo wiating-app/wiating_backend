@@ -92,10 +92,10 @@ def report(user):
     try:
         if user.get('role') == MODERATOR:
             if es.report_moderator(params['id'], params['report_reason']):
-                return Response(200)
+                return Response(status=200)
         else:
             if es.report_regular(params['id'], params['report_reason']):
-                return Response(200)
-        return Response(503)
+                return Response(status=200)
+        return Response(status=503)
     except AttributeError:
         return Response(status=400, response="Report reason and location ID required")
