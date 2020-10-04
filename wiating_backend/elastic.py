@@ -90,7 +90,7 @@ class Point:
         return body
 
     def modify(self, name, description, directions, lat, lon, point_type, water_exists, fire_exists, water_comment,
-               fire_comment, is_disabled, report_reason, user_sub):
+               fire_comment, is_disabled, user_sub):
         params = locals()
         params.pop('self')
         params.pop('user_sub')
