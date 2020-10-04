@@ -91,7 +91,11 @@ def report(user):
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     try:
         if user.get('role') == MODERATOR:
-            return es.report_moderator(params['id'], params['report_reason'])
-        return es.report_regular(params['id'], params['report_reason'])
+            if es.report_moderator(params['id'], params['report_reason']):
+                return Response(200)
+        else:
+            if es.report_regular(params['id'], params['report_reason']):
+                return Response(200)
+        return Response(503)
     except AttributeError:
         return Response(status=400, response="Report reason and location ID required")
