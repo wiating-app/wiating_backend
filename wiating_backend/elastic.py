@@ -280,14 +280,16 @@ class Elasticsearch:
         point = Point.from_dict(body=body)
         point.report_reason_append(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
-        return res
+        if res['result'] == 'updated':
+            return True
 
     def report_regular(self, point_id, report_reason):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)
         point.report_reason_replace(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
-        return res
+        if res['result'] == 'updated':
+            return True
 
     def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
                   fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
