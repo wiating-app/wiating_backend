@@ -1,5 +1,6 @@
 from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
+from .constants import MODERATOR
 from .elastic import Elasticsearch
 
 
@@ -35,11 +36,19 @@ def get_logs(user):
 
 @logs.route('/get_log', methods=['POST'])
 @requires_auth
-@moderator
 def get_log(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     try:
-        return es.get_log(log_id=params['log_id'])
+        if user.get('role') == MODERATOR:
+            return es.get_log(log_id=params['log_id'])
+        else:
+            log = es.get_log(log_id=params['log_id'])
+            if log['_source']['modified_by'] == user['sub']:
+                return log
+            else:
+                return Response(status=403)
     except IndexError:
         return Response("Log not found", 404)
+    except AttributeError:
+        return Response(status=400, response="Log ID required")
