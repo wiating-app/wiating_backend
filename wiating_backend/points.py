@@ -59,6 +59,12 @@ def modify_point(user):
 
 @points.route('/search_points', methods=['POST'])
 def search_points():
+    """
+    It takes search parameters from JSON data.
+    Result contains items with non-empty `report_reason` only if `report_reason` is set True, if False it returns items
+    without `report_reason`, if not set returns both.
+    :return:
+    """
     params = request.json
     phrase = params['phrase']
     point_type = params.get('point_type')
@@ -67,10 +73,11 @@ def search_points():
     water = params.get('water')
     fire = params.get('fire')
     is_disabled = params.get('is_disabled')
+    report_reason = params.get('report_reason')
 
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.search_points(phrase=phrase, point_type=point_type, top_right=top_right, bottom_left=bottom_left,
-                            water=water, fire=fire, is_disabled=is_disabled)
+                            water=water, fire=fire, is_disabled=is_disabled, report_reason=report_reason)
 
 
 @points.route('/delete_point', methods=['POST'])
