@@ -1,5 +1,68 @@
 import pytest
-from wiating_backend.elastic import Point, NotDefined
+from unittest.mock import MagicMock
+from wiating_backend.elastic import Point, NotDefined, Elasticsearch
+
+
+@pytest.fixture
+def elasticsearch(mocker):
+    return mocker.patch('wiating_backend.elastic.ES', autospec=True)
+
+
+def test_elasticsearch_search_points_phrase(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(phrase="some phrase")
+
+    search_mock.assert_called_with(index='wiaty', body={'query': {'bool': {'must': [{
+                                      "multi_match": {
+                                          "query": "some phrase",
+                                          "fields": [
+                                              "name^3",
+                                              "description",
+                                              "directions"
+                                          ]
+                                      }
+                                  }]}}})
+
+
+def test_elasticsearch_search_points_report_reason_true(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(report_reason=True)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {'bool': {'filter': [{'exists': {'field': 'report_reason'}}]}}})
+
+
+def test_elasticsearch_search_points_report_reason_false(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(report_reason=False)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {'bool': {'must_not': [{'exists': {'field': 'report_reason'}}]}}})
+
+
+def test_elasticsearch_search_points_report_reason_true_phrase(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(phrase="some phrase", report_reason=True)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {'bool': {'must': [{
+                                       "multi_match": {
+                                           "query": "some phrase",
+                                           "fields": [
+                                               "name^3",
+                                               "description",
+                                               "directions"
+                                           ]
+                                       }
+                                   }], 'filter': [{'exists': {'field': 'report_reason'}}]}}})
 
 
 def test_createPoint():

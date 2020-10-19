@@ -66,7 +66,7 @@ def search_points():
     :return:
     """
     params = request.json
-    phrase = params['phrase']
+    phrase = params.get('phrase')
     point_type = params.get('point_type')
     top_right = params.get('top_right')
     bottom_left = params.get('bottom_left')

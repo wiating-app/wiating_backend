@@ -132,24 +132,25 @@ class Elasticsearch:
         self.es = ES([connection_string])
         self.index = index
 
-    def search_points(self, phrase, point_type=None, top_right=None, bottom_left=None, water=None, fire=None,
+    def search_points(self, phrase=None, point_type=None, top_right=None, bottom_left=None, water=None, fire=None,
                       is_disabled=None, report_reason=None):
         body = {
             "query": {
-                "bool": {
-                    "must": [{
-                        "multi_match": {
-                            "query": phrase,
-                            "fields": [
-                                "name^3",
-                                "description",
-                                "directions"
-                            ]
-                        }
-                    }]
-                }
+                "bool": {}
             }
         }
+        if phrase is not None:
+            add_to_or_create_list(location=body['query']['bool'], name='must',
+                                  query={
+                                      "multi_match": {
+                                          "query": phrase,
+                                          "fields": [
+                                              "name^3",
+                                              "description",
+                                              "directions"
+                                          ]
+                                      }
+                                  })
         if point_type not in [None, []]:
             body['query']['bool']['minimum_should_match'] = 1
             for ptype in point_type:

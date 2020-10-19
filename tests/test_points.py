@@ -41,10 +41,11 @@ def test_search_points(client, elastic_mock):
                           "bottom_left": "bottom left",
                           "water": "water",
                           "fire": "fire",
-                          "is_disabled": "is disabled"
+                          "is_disabled": "is disabled",
+                          "report_reason": True
                       }
     )
     assert res.json == {"some": "value"}
     search_points_mock.assert_called_with(phrase="some phrase", point_type="some type", top_right="top right",
                                           bottom_left="bottom left", water="water", fire="fire",
-                                          is_disabled="is disabled")
+                                          is_disabled="is disabled", report_reason=True)
