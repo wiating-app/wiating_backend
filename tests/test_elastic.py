@@ -65,6 +65,144 @@ def test_elasticsearch_search_points_report_reason_true_phrase(elasticsearch):
                                    }], 'filter': [{'exists': {'field': 'report_reason'}}]}}})
 
 
+def test_elasticsearch_search_points_point_type(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(point_type=["some", "types"])
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {
+                                       'bool': {'minimum_should_match': 1,
+                                                'should': [{"term": {"type": {"value": "some"}}},
+                                                           {"term": {"type": {"value": "types"}}}]}}})
+
+
+def test_elasticsearch_search_points_top_right_bottom_left(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111})
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {
+                                       'bool': {'filter': [{"geo_bounding_box": {
+                                           "location": {
+                                               "top_left": {
+                                                   "lat": '123',
+                                                   "lon": '111'
+                                               },
+                                               "bottom_right": {
+                                                   "lat": '222',
+                                                   "lon": '321'
+                                               }
+                                           }
+                                       }}]}}})
+
+
+def test_elasticsearch_search_points_water(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(water=True)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {
+                                       'bool': {'filter': [{"term": {"water_exists": True}}]}}})
+
+
+def test_elasticsearch_search_points_fire(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(fire=True)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {
+                                       'bool': {'filter': [{"term": {"fire_exists": True}}]}}})
+
+
+def test_elasticsearch_search_points_is_disabled(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.search_points(is_disabled=True)
+
+    search_mock.assert_called_with(index='wiaty',
+                                   body={'query': {
+                                       'bool': {'filter': [{"term": {"is_disabled": True}}]}}})
+
+
+def test_elasticsearch_get_points(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.get_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111})
+
+    search_mock.assert_called_with(index='wiaty', body={
+        "query": {
+            "bool": {
+                "must": {
+                    "match_all": {}
+                },
+                "filter": [{
+                    "geo_bounding_box": {
+                        "validation_method": "COERCE",
+                        "location": {
+                            "top_left": {
+                                "lat": '123',
+                                "lon": '111'
+                            },
+                            "bottom_right": {
+                                "lat": '222',
+                                "lon": '321'
+                            }
+                        }
+                    }
+                }]
+            }
+        },
+        "size": 9000
+    })
+
+
+def test_elasticsearch_get_points_point_type(elasticsearch):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    elasticsearch.return_value.search = search_mock
+    es.get_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111},
+                  point_type=["some", "types"])
+
+    search_mock.assert_called_with(index='wiaty', body={
+        "query": {
+            "bool": {
+                "must": {
+                    "match_all": {}
+                },
+                "filter": [{
+                    "geo_bounding_box": {
+                        "validation_method": "COERCE",
+                        "location": {
+                            "top_left": {
+                                "lat": '123',
+                                "lon": '111'
+                            },
+                            "bottom_right": {
+                                "lat": '222',
+                                "lon": '321'
+                            }
+                        }
+                    }
+                }],
+                'minimum_should_match': 1,
+                'should': [{"term": {"type": {"value": "some"}}},
+                           {"term": {"type": {"value": "types"}}}]
+            }
+        },
+        "size": 9000
+    })
+
+
 def test_createPoint():
     point = Point(name='some name', description='some desc', directions='some directions',
                   lat="15", lon="20", point_type="SHED", water_exists=True, water_comment="some water comment",
