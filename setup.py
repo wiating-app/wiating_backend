@@ -36,6 +36,6 @@ setup(
     name='wiating_backend',
     packages=find_packages(include=['wiating_backend', 'wiating_backend.*']),
     url='https://github.com/merito/wiating_backend',
-    version='1.3.1',
+    version='1.3.2',
     zip_safe=False,
 )

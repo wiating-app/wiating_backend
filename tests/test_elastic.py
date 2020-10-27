@@ -292,6 +292,11 @@ def test_reportReasonAppend():
     assert point.report_reason == ["some reason", "another reason"]
 
 
-def test_reportReasonReplace(point_from_dict):
+def test_reportReasonReplaceNotEmpty(point_from_dict):
     point_from_dict.report_reason_replace("another reason")
     assert point_from_dict.report_reason == ["another reason"]
+
+
+def test_reportReasonReplaceEmpty(point_from_dict):
+    point_from_dict.report_reason_replace(None)
+    assert point_from_dict.report_reason == None

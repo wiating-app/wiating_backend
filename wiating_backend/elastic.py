@@ -116,7 +116,10 @@ class Point:
             self.report_reason = [report_reason]
 
     def report_reason_replace(self, report_reason):
-        self.report_reason = [report_reason]
+        if report_reason is None:
+            self.report_reason = None
+        else:
+            self.report_reason = [report_reason]
 
 
 def add_to_or_create_list(location, name, query):
