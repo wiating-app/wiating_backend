@@ -259,10 +259,24 @@ class Elasticsearch:
         response = self.es.search(index=self.index + '_*', body=body)
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
-    def get_log(self, log_id):
+    def _get_raw_log(self, log_id):
         body = {"query": {"term": {"_id": log_id}}}
         response = self.es.search(index=self.index + '_*', body=body)
+        return response
+
+    def get_log(self, log_id):
+        response = self._get_raw_log(log_id)
         return response['hits']['hits'][0]['_source']
+
+    def log_reviewed(self, log_id, user):
+        raw_log = self._get_raw_log(log_id=log_id)
+        log_index = raw_log['hits']['hits'][0]['_index']
+        body = {"doc": {"reviewed_at": datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"),
+                        "reviewed_by": user}}
+        response = self.es.update(index=log_index, id=log_id, body=body)
+        if response['result'] == 'updated':
+            return True
+        return False
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
                      point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled):

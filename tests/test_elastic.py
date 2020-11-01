@@ -1,3 +1,4 @@
+import datetime
 import pytest
 from unittest.mock import MagicMock
 from wiating_backend.elastic import Point, NotDefined, Elasticsearch
@@ -6,6 +7,11 @@ from wiating_backend.elastic import Point, NotDefined, Elasticsearch
 @pytest.fixture
 def elasticsearch(mocker):
     return mocker.patch('wiating_backend.elastic.ES', autospec=True)
+
+
+@pytest.fixture
+def datetime_mock(mocker):
+    return mocker.patch('wiating_backend.elastic.datetime')
 
 
 def test_elasticsearch_search_points_phrase(elasticsearch):
@@ -201,6 +207,50 @@ def test_elasticsearch_get_points_point_type(elasticsearch):
         },
         "size": 9000
     })
+
+
+def test_elasticsearch_log_reviewed_success(elasticsearch, datetime_mock):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    search_mock.return_value = {"hits": {"hits": [{"_index": "some index"}]}}
+    elasticsearch.return_value.search = search_mock
+
+    update_mock = MagicMock()
+    elasticsearch.return_value.update = update_mock
+    update_mock.return_value = {"result": "updated"}
+
+    fake_time = datetime.datetime(2018, 6, 12, 14, 50, 00)
+    fake_time_string = fake_time.strftime("%Y/%m/%d %H:%M:%S")
+    datetime_mock.utcnow.return_value = fake_time
+
+    result = es.log_reviewed(log_id='12345', user='54321')
+
+    update_mock.assert_called_with(index="some index", id='12345',
+                                   body={"doc": {"reviewed_at": fake_time_string,
+                                                 "reviewed_by": '54321'}})
+    assert result == True
+
+
+def test_elasticsearch_log_reviewed_fail(elasticsearch, datetime_mock):
+    es = Elasticsearch('some string')
+    search_mock = MagicMock()
+    search_mock.return_value = {"hits": {"hits": [{"_index": "some index"}]}}
+    elasticsearch.return_value.search = search_mock
+
+    update_mock = MagicMock()
+    elasticsearch.return_value.update = update_mock
+    update_mock.return_value = {"result": "created"}
+
+    fake_time = datetime.datetime(2018, 6, 12, 14, 50, 00)
+    fake_time_string = fake_time.strftime("%Y/%m/%d %H:%M:%S")
+    datetime_mock.utcnow.return_value = fake_time
+
+    result = es.log_reviewed(log_id='12345', user='54321')
+
+    update_mock.assert_called_with(index="some index", id='12345',
+                                   body={"doc": {"reviewed_at": fake_time_string,
+                                                 "reviewed_by": '54321'}})
+    assert result == False
 
 
 def test_createPoint():

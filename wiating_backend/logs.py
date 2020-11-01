@@ -52,3 +52,19 @@ def get_log(user):
         return Response("Log not found", 404)
     except AttributeError:
         return Response(status=400, response="Log ID required")
+
+
+@logs.route('/log_reviewed', methods=['POST'])
+@requires_auth
+@moderator
+def log_reviewed(user):
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    try:
+        result = es.log_reviewed(params['log_id'], user['sub'])
+        if result:
+            return Response(status=200)
+        else:
+            return Response(status=500, response="Database error")
+    except KeyError:
+        return Response(status=400, response="Existing log ID required")
