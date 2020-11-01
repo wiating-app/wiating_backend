@@ -66,5 +66,5 @@ def log_reviewed(user):
             return Response(status=200)
         else:
             return Response(status=500, response="Database error")
-    except KeyError:
+    except (KeyError, IndexError):
         return Response(status=400, response="Existing log ID required")

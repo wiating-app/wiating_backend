@@ -1,6 +1,10 @@
 =======
 History
 =======
+1.4.1 (2020-11-01)
+------------------
+* Endpoint log_reviewed return HTTP 400 if no log found
+
 1.4.0 (2020-11-01)
 ------------------
 * New endpoint log_reviewed
