@@ -29,7 +29,8 @@ def get_logs(user):
     try:
         size = params.get('size', 25)
         offset = params.get('offset', 0)
-        return es.get_logs(point_id=params.get('id'), size=size, offset=offset)
+        reviewed_at = params.get('reviewed_at')
+        return es.get_logs(point_id=params.get('id'), size=size, offset=offset, reviewed_at=reviewed_at)
     except AttributeError:
         return es.get_logs()
 

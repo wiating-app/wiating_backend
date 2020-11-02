@@ -1,6 +1,10 @@
 =======
 History
 =======
+1.5.0 (2020-11-02)
+-----------------
+* Add reviewed_at parameter to get_logs
+
 1.4.1 (2020-11-01)
 ------------------
 * Endpoint log_reviewed return HTTP 400 if no log found

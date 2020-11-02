@@ -252,10 +252,18 @@ class Elasticsearch:
         response = self.es.search(index=self.index + '_*', body=body)
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
-    def get_logs(self, point_id=None, size=25, offset=0):
-        body = {"sort": [{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
+    def get_logs(self, point_id=None, size=25, offset=0, reviewed_at=None):
+        body = {"query": {"bool": {}}, "sort": [{"timestamp": {"order": "desc"}}], "from": offset, "size": size}
         if point_id is not None:
-            body['query'] = {'term': {'doc_id.keyword': {'value': point_id}}}
+            add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                  query={'term': {'doc_id.keyword': {'value': point_id}}})
+        if reviewed_at is not None:
+            if reviewed_at:
+                add_to_or_create_list(location=body['query']['bool'], name='filter',
+                                      query={"exists": {"field": "reviewed_at"}})
+            else:
+                add_to_or_create_list(location=body['query']['bool'], name='must_not',
+                                      query={"exists": {"field": "reviewed_at"}})
         response = self.es.search(index=self.index + '_*', body=body)
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
 
