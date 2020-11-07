@@ -1,0 +1,89 @@
+{ 
+  "settings": { 
+    "index": { 
+      "number_of_replicas": 0
+    } 
+  }, 
+  "mappings": { 
+    "properties": { 
+      "name": { 
+        "type": "text", 
+        "analyzer": "polish", 
+        "fields": { 
+          "raw": { 
+            "type": "keyword" 
+          } 
+        } 
+      }, 
+      "description": { 
+        "type": "text", 
+        "analyzer": "polish" 
+      }, 
+      "directions": { 
+        "type": "text", 
+        "analyzer": "polish" 
+      }, 
+      "location": { 
+        "type": "geo_point" 
+      }, 
+      "type": {
+        "type": "keyword" 
+      }, 
+      "water_exists": { 
+        "type": "boolean" 
+      }, 
+      "water_comment": { 
+        "type": "text", 
+        "analyzer": "polish", 
+        "fields": { 
+          "raw": { 
+            "type": "keyword" 
+          } 
+        } 
+      }, 
+      "fire_exists": { 
+        "type": "boolean" 
+      }, 
+      "fire_comment": { 
+        "type": "text", 
+        "analyzer": "polish", 
+        "fields": { 
+          "raw": { 
+            "type": "keyword" 
+          } 
+        } 
+      }, 
+      "created_timestamp": { 
+        "type": "date" 
+      }, 
+      "created_by": { 
+        "type": "keyword" 
+      }, 
+      "last_modified_timestamp": { 
+        "type": "date" 
+      }, 
+      "last_modified_by": { 
+        "type": "keyword" 
+      }, 
+      "images": { 
+        "properties": { 
+          "name": { 
+            "type": "keyword" 
+          }, 
+          "created_timestamp": { 
+            "type": "date" 
+          }, 
+          "created_by": { 
+            "type": "keyword" 
+          } 
+        } 
+      },
+      "is_disabled": {
+        "type": "boolean"
+      },
+      "report_reason": {
+        "type": "keyword"
+      }
+    } 
+  } 
+}
