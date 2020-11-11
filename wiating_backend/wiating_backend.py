@@ -51,7 +51,7 @@ def configure_compression(app):
 
 
 def create_app(config):
-    app = Flask(__name__, static_url_path='/public', static_folder='./public')
+    app = Flask(__name__, static_url_path=config.FLASK_STATIC_PATH, static_folder=config.FLASK_STATIC_FOLDER)
     configure_app(app, config)
     configure_blueprints(app)
     configure_home(app)

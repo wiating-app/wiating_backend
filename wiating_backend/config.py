@@ -31,6 +31,9 @@ class BaseConfig:
         self.INDEX_NAME = env.get(constants.INDEX_NAME)
         self.QUEUE_NAME = env.get(constants.IMAGE_RESIZER_QUEUE)
 
+        self.FLASK_STATIC_PATH = env.get(constants.FLASK_STATIC_PATH)
+        self.FLASK_STATIC_FOLDER = env.get(constants.FLASK_STATIC_FOLDER)
+
 
 class DefaultConfig(BaseConfig):
     pass
