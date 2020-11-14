@@ -1,7 +1,7 @@
 from auth0.v3 import Auth0Error
 from flask import request, url_for
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, Mock
 
 from wiating_backend.auth import AuthError, get_token_auth_header, requires_auth, moderator
 from wiating_backend.constants import APP_METADATA_KEY
@@ -80,10 +80,6 @@ def test_requires_auth_unauthorized(auth0_users_raises, client):
 @moderator
 def some_function(user):
     return "some text"
-
-
-def test_moderator_decorator_success():
-    assert "some text" == some_function(user={'role': 'moderator'})
 
 
 def test_moderator_decorator_wrong_role_name():

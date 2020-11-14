@@ -1,6 +1,10 @@
 =======
 History
 =======
+1.6.0 (2020-11-14)
+------------------
+* Check if moderator has an access to the service
+
 1.5.0 (2020-11-02)
 -----------------
 * Add reviewed_at parameter to get_logs

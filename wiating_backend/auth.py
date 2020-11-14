@@ -50,6 +50,7 @@ def requires_auth(f):
             user = {'sub': a0_user.get('sub')}
             if a0_user.get(APP_METADATA_KEY):
                 user['role'] = a0_user.get(APP_METADATA_KEY).get('role')
+                user['services'] = a0_user.get(APP_METADATA_KEY).get('services')
         except Auth0Error:
             return Response("Forbidden", 403)
         except AuthError:
@@ -63,7 +64,8 @@ def moderator(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         try:
-            if kwargs['user']['role'] == MODERATOR:
+            if kwargs['user']['role'] == MODERATOR and \
+                current_app.config.get('INDEX_NAME') in kwargs['user']['services']:
                 return f(*args, **kwargs)
         except KeyError:
             return Response("Forbidden", 403)
