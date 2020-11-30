@@ -16,6 +16,10 @@ class Point:
         self.directions = directions
         self.lat = str(lat)
         self.lon = str(lon)
+        point_type_list = ['SHED', 'CABIN', 'CABIN_FIREPLACE', 'CABIN_HOSTED', 'TENT_CAMP', 'WATERFRONT', 'URBEX',
+                           'WATER_SOURCE', 'CAVE', 'SACRAL', 'TOWER', 'EMERGENCY']
+        if point_type not in point_type_list:
+            raise ValueError('point type is not on point type list')
         self.point_type = point_type
         self.water_exists = water_exists
         self.fire_exists = fire_exists
