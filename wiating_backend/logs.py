@@ -64,7 +64,7 @@ def log_reviewed(user):
     try:
         result = es.log_reviewed(params['log_id'], user['sub'])
         if result:
-            return Response(status=200)
+            return result
         else:
             return Response(status=500, response="Database error")
     except (KeyError, IndexError):

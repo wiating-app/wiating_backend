@@ -1,6 +1,11 @@
 =======
 History
 =======
+1.7.0 (2020-12-04)
+------------------
+* log_reviewed returns updated log entry
+* Fixed dependencies
+
 1.6.0 (2020-11-14)
 ------------------
 * Check if moderator has an access to the service

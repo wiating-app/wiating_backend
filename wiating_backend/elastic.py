@@ -281,9 +281,9 @@ class Elasticsearch:
         log_index = raw_log['hits']['hits'][0]['_index']
         body = {"doc": {"reviewed_at": datetime.utcnow().strftime("%Y/%m/%d %H:%M:%S"),
                         "reviewed_by": user}}
-        response = self.es.update(index=log_index, id=log_id, body=body)
+        response = self.es.update(index=log_index, id=log_id, body=body, _source=True)
         if response['result'] == 'updated':
-            return True
+            return response['get']['_source']
         return False
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
