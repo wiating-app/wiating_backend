@@ -217,7 +217,7 @@ def test_elasticsearch_log_reviewed_success(elasticsearch, datetime_mock):
 
     update_mock = MagicMock()
     elasticsearch.return_value.update = update_mock
-    update_mock.return_value = {"result": "updated"}
+    update_mock.return_value = {"result": "updated", "get": {"_source":{"some": "source"}}}
 
     fake_time = datetime.datetime(2018, 6, 12, 14, 50, 00)
     fake_time_string = fake_time.strftime("%Y/%m/%d %H:%M:%S")
@@ -227,8 +227,9 @@ def test_elasticsearch_log_reviewed_success(elasticsearch, datetime_mock):
 
     update_mock.assert_called_with(index="some index", id='12345',
                                    body={"doc": {"reviewed_at": fake_time_string,
-                                                 "reviewed_by": '54321'}})
-    assert result == True
+                                                 "reviewed_by": '54321'}},
+                                   _source=True)
+    assert result == {"some": "source"}
 
 
 def test_elasticsearch_log_reviewed_fail(elasticsearch, datetime_mock):
@@ -249,7 +250,8 @@ def test_elasticsearch_log_reviewed_fail(elasticsearch, datetime_mock):
 
     update_mock.assert_called_with(index="some index", id='12345',
                                    body={"doc": {"reviewed_at": fake_time_string,
-                                                 "reviewed_by": '54321'}})
+                                                 "reviewed_by": '54321'}},
+                                   _source=True)
     assert result == False
 
 
