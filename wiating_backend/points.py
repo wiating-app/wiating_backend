@@ -35,9 +35,8 @@ def add_point(user):
                             water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
                             fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
                             is_disabled=req_json.get('is_disabled', False), user_sub=sub)
-    except ValueError:
-        return Response(status=400, response='point type is not on point type list')
-
+    except PointTypeError as e:
+        return Response(status=400, response=str(e))
 
 @points.route('/modify_point', methods=['POST'])
 @requires_auth
@@ -60,9 +59,8 @@ def modify_point(user):
                                fire_exists=req_json.get('fire_exists', NotDefined()),
                                fire_comment=req_json.get('fire_comment', NotDefined()),
                                is_disabled=req_json.get('is_disabled', NotDefined()), user_sub=sub)
-    except PointTypeError:
-        return Response(status=400, response='point type is not on point type list')
-
+    except PointTypeError as e:
+        return Response(status=400, response=str(e))
 
 @points.route('/search_points', methods=['POST'])
 def search_points():
