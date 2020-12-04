@@ -6,6 +6,10 @@ class NotDefined:
     pass
 
 
+class PointTypeError(Exception):
+    pass
+
+
 class Point:
     def __init__(self, name, description, directions, lat, lon, point_type, created_by, last_modified_by,
                  water_exists=None, fire_exists=None, water_comment=None, fire_comment=None, doc_id=None,
@@ -19,7 +23,7 @@ class Point:
         point_type_list = ['SHED', 'CABIN', 'CABIN_FIREPLACE', 'CABIN_HOSTED', 'TENT_CAMP', 'WATERFRONT', 'URBEX',
                            'WATER_SOURCE', 'CAVE', 'SACRAL', 'TOWER', 'EMERGENCY']
         if point_type not in point_type_list:
-            raise ValueError('point type is not on point type list')
+            raise PointTypeError('point type is not on point type list')
         self.point_type = point_type
         self.water_exists = water_exists
         self.fire_exists = fire_exists
@@ -195,7 +199,12 @@ class Elasticsearch:
                 add_to_or_create_list(location=body['query']['bool'], name='must_not',
                                       query={"exists": {"field": "report_reason"}})
         response = self.es.search(index=self.index, body=body)
-        read_points = list(map(Point.from_dict, response['hits']['hits']))
+        read_points = []
+        for p in response['hits']['hits']:
+            try:
+                read_points.append(Point.from_dict(p))
+            except PointTypeError:
+                pass
         out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
 
@@ -231,13 +240,21 @@ class Elasticsearch:
                 add_to_or_create_list(location=body['query']['bool'], name='should',
                                       query={"term": {"type": {"value": ptype}}})
         response = self.es.search(index=self.index, body=body)
-        read_points = list(map(Point.from_dict, response['hits']['hits']))
+        read_points = []
+        for p in response['hits']['hits']:
+            try:
+                read_points.append(Point.from_dict(p))
+            except PointTypeError:
+                pass
         out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
 
     def get_point(self, point_id):
         response = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=response)
+        try:
+            point = Point.from_dict(body=response)
+        except PointTypeError:
+            pass
         return point.to_dict(with_id=True)
 
     def get_user_logs(self, user, size=25, offset=0):
@@ -293,7 +310,10 @@ class Elasticsearch:
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
                      point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled):
         body = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=body)
+        try:
+            point = Point.from_dict(body=body)
+        except PointTypeError:
+            pass
         changes = point.modify(name=name, description=description, directions=directions, lat=lat, lon=lon,
                                point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                                fire_exists=fire_exists, fire_comment=fire_comment, is_disabled=is_disabled,
@@ -307,7 +327,10 @@ class Elasticsearch:
 
     def report_moderator(self, point_id, report_reason):
         body = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=body)
+        try:
+            point = Point.from_dict(body=body)
+        except PointTypeError:
+            pass
         point.report_reason_replace(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
@@ -315,7 +338,10 @@ class Elasticsearch:
 
     def report_regular(self, point_id, report_reason):
         body = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=body)
+        try:
+            point = Point.from_dict(body=body)
+        except PointTypeError:
+            pass
         point.report_reason_append(report_reason=report_reason)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
@@ -341,7 +367,10 @@ class Elasticsearch:
 
     def add_image(self, point_id, path, sub):
         body = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=body)
+        try:
+            point = Point.from_dict(body=body)
+        except PointTypeError:
+            pass
         images = point.images
         if images is None:
             images = []
@@ -356,7 +385,10 @@ class Elasticsearch:
 
     def delete_image(self, point_id, image_name, sub):
         body = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=body)
+        try:
+            point = Point.from_dict(body=body)
+        except PointTypeError:
+            pass
         new_images = [image for image in point.images if image['name'] != image_name]
         res = self.es.update(index=self.index, id=point_id, body={"doc": {"images": new_images}})
         if res['result'] == 'updated':

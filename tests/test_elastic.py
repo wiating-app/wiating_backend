@@ -1,8 +1,7 @@
 import datetime
 import pytest
 from unittest.mock import MagicMock
-from wiating_backend.elastic import Point, NotDefined, Elasticsearch
-from testfixtures import ShouldRaise
+from wiating_backend.elastic import Point, NotDefined, Elasticsearch, PointTypeError
 
 
 @pytest.fixture
@@ -22,15 +21,15 @@ def test_elasticsearch_search_points_phrase(elasticsearch):
     es.search_points(phrase="some phrase")
 
     search_mock.assert_called_with(index='wiaty', body={'query': {'bool': {'must': [{
-                                      "multi_match": {
-                                          "query": "some phrase",
-                                          "fields": [
-                                              "name^3",
-                                              "description",
-                                              "directions"
-                                          ]
-                                      }
-                                  }]}}})
+        "multi_match": {
+            "query": "some phrase",
+            "fields": [
+                "name^3",
+                "description",
+                "directions"
+            ]
+        }
+    }]}}})
 
 
 def test_elasticsearch_search_points_report_reason_true(elasticsearch):
@@ -271,13 +270,13 @@ def test_newPoint():
     assert point.last_modified_by == "some sub"
     assert point.created_by == "some sub"
 
-def test_newPoint_valueError():
-    with ShouldRaise(ValueError ('point type is not on point type list')):
-        point = Point.new_point(name='some name', description='some desc', directions='some directions',
-                            lat="15", lon="20", point_type="aaaaa", water_exists=True,
-                            water_comment="some water comment",
-                            fire_exists=True, fire_comment="some fire comment", user_sub="some sub")
 
+def test_newPoint_pointTypeError():
+    with pytest.raises(PointTypeError):
+        point = Point.new_point(name='some name', description='some desc', directions='some directions',
+                                lat="15", lon="20", point_type="AAAAA", water_exists=True,
+                                water_comment="some water comment",
+                                fire_exists=True, fire_comment="some fire comment", user_sub="some sub")
 
 
 @pytest.fixture

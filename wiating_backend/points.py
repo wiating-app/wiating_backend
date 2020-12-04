@@ -1,7 +1,7 @@
 from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
 from .constants import MODERATOR
-from .elastic import Elasticsearch, NotDefined
+from .elastic import Elasticsearch, NotDefined, PointTypeError
 from .image import delete_image_directory
 from .logging import logger
 
@@ -28,11 +28,15 @@ def add_point(user):
     req_json = request.json
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
-                        lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
-                        water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
-                        fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
-                        is_disabled=req_json.get('is_disabled', False), user_sub=sub)
+    try:
+        return es.add_point(name=req_json['name'], description=req_json['description'],
+                            directions=req_json['directions'],
+                            lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
+                            water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
+                            fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
+                            is_disabled=req_json.get('is_disabled', False), user_sub=sub)
+    except ValueError:
+        return Response(status=400, response='point type is not on point type list')
 
 
 @points.route('/modify_point', methods=['POST'])
@@ -42,19 +46,22 @@ def modify_point(user):
     logger.info('modify_point')
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
-                           description=req_json.get('description', NotDefined()),
-                           directions=req_json.get('directions', NotDefined()),
-                           lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined
-                           else NotDefined(),
-                           lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined
-                           else NotDefined(),
-                           point_type=req_json.get('type', NotDefined()),
-                           water_exists=req_json.get('water_exists', NotDefined()),
-                           water_comment=req_json.get('water_comment', NotDefined()),
-                           fire_exists=req_json.get('fire_exists', NotDefined()),
-                           fire_comment=req_json.get('fire_comment', NotDefined()),
-                           is_disabled=req_json.get('is_disabled', NotDefined()), user_sub=sub)
+    try:
+        return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
+                               description=req_json.get('description', NotDefined()),
+                               directions=req_json.get('directions', NotDefined()),
+                               lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               point_type=req_json.get('type', NotDefined()),
+                               water_exists=req_json.get('water_exists', NotDefined()),
+                               water_comment=req_json.get('water_comment', NotDefined()),
+                               fire_exists=req_json.get('fire_exists', NotDefined()),
+                               fire_comment=req_json.get('fire_comment', NotDefined()),
+                               is_disabled=req_json.get('is_disabled', NotDefined()), user_sub=sub)
+    except PointTypeError:
+        return Response(status=400, response='point type is not on point type list')
 
 
 @points.route('/search_points', methods=['POST'])
