@@ -45,7 +45,7 @@ def get_log(user):
             return es.get_log(log_id=params['log_id'])
         else:
             log = es.get_log(log_id=params['log_id'])
-            if log['_source']['modified_by'] == user['sub']:
+            if log['modified_by'] == user['sub']:
                 return log
             else:
                 return Response(status=403)

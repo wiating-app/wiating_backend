@@ -1,6 +1,10 @@
 =======
 History
 =======
+1.7.2 (2020-12-10)
+------------------
+* Fix get_log HTTP 500
+
 1.7.1 (2020-12-09)
 ------------------
 * Bypass auth0 free tier request limit by using redis cache for authorisation
