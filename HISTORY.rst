@@ -1,6 +1,10 @@
 =======
 History
 =======
+1.7.1 (2020-12-09)
+------------------
+* Bypass auth0 free tier request limit by using redis cache for authorisation
+
 1.7.0 (2020-12-04)
 ------------------
 * log_reviewed returns updated log entry

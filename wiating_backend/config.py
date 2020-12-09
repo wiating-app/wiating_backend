@@ -34,6 +34,9 @@ class BaseConfig:
         self.FLASK_STATIC_PATH = env.get(constants.FLASK_STATIC_PATH)
         self.FLASK_STATIC_FOLDER = env.get(constants.FLASK_STATIC_FOLDER)
 
+        self.REDIS_HOST = env.get(constants.REDIS_HOST)
+        self.REDIS_PORT = env.get(constants.REDIS_PORT)
+
 
 class DefaultConfig(BaseConfig):
     pass
