@@ -1,6 +1,5 @@
 from flask import Blueprint, current_app, request, Response
 from .auth import requires_auth, moderator
-from .constants import MODERATOR
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
 from .logging import logger
@@ -97,7 +96,7 @@ def report(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     try:
-        if user.get('role') == MODERATOR:
+        if user.get('is_moderator'):
             if es.report_moderator(params['id'], params['report_reason']):
                 return Response(status=200)
         else:
