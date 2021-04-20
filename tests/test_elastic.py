@@ -20,7 +20,9 @@ def test_elasticsearch_search_points_phrase(elasticsearch):
     elasticsearch.return_value.search = search_mock
     es.search_points(phrase="some phrase")
 
-    search_mock.assert_called_with(index='wiaty', body={'query': {'bool': {'must': [{
+    search_mock.assert_called_with(index='wiaty', body={'query': {'bool':
+                                      {"must_not": [{"term": {"unpublished": True}}],
+                                      'must': [{
                                       "multi_match": {
                                           "query": "some phrase",
                                           "fields": [
@@ -39,7 +41,8 @@ def test_elasticsearch_search_points_report_reason_true(elasticsearch):
     es.search_points(report_reason=True)
 
     search_mock.assert_called_with(index='wiaty',
-                                   body={'query': {'bool': {'filter': [{'exists': {'field': 'report_reason'}}]}}})
+                                   body={'query': {'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                                            'filter': [{'exists': {'field': 'report_reason'}}]}}})
 
 
 def test_elasticsearch_search_points_report_reason_false(elasticsearch):
@@ -49,7 +52,8 @@ def test_elasticsearch_search_points_report_reason_false(elasticsearch):
     es.search_points(report_reason=False)
 
     search_mock.assert_called_with(index='wiaty',
-                                   body={'query': {'bool': {'must_not': [{'exists': {'field': 'report_reason'}}]}}})
+                                   body={'query': {'bool': {'must_not': [{"term": {"unpublished": True}},
+                                                                         {'exists': {'field': 'report_reason'}}]}}})
 
 
 def test_elasticsearch_search_points_report_reason_true_phrase(elasticsearch):
@@ -59,7 +63,8 @@ def test_elasticsearch_search_points_report_reason_true_phrase(elasticsearch):
     es.search_points(phrase="some phrase", report_reason=True)
 
     search_mock.assert_called_with(index='wiaty',
-                                   body={'query': {'bool': {'must': [{
+                                   body={'query': {'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                    'must': [{
                                        "multi_match": {
                                            "query": "some phrase",
                                            "fields": [
@@ -79,7 +84,8 @@ def test_elasticsearch_search_points_point_type(elasticsearch):
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
-                                       'bool': {'minimum_should_match': 1,
+                                       'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                                'minimum_should_match': 1,
                                                 'should': [{"term": {"type": {"value": "some"}}},
                                                            {"term": {"type": {"value": "types"}}}]}}})
 
@@ -92,7 +98,8 @@ def test_elasticsearch_search_points_top_right_bottom_left(elasticsearch):
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
-                                       'bool': {'filter': [{"geo_bounding_box": {
+                                       'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                           'filter': [{"geo_bounding_box": {
                                            "location": {
                                                "top_left": {
                                                    "lat": '123',
@@ -114,7 +121,8 @@ def test_elasticsearch_search_points_water(elasticsearch):
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
-                                       'bool': {'filter': [{"term": {"water_exists": True}}]}}})
+                                       'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                                'filter': [{"term": {"water_exists": True}}]}}})
 
 
 def test_elasticsearch_search_points_fire(elasticsearch):
@@ -125,7 +133,8 @@ def test_elasticsearch_search_points_fire(elasticsearch):
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
-                                       'bool': {'filter': [{"term": {"fire_exists": True}}]}}})
+                                       'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                           'filter': [{"term": {"fire_exists": True}}]}}})
 
 
 def test_elasticsearch_search_points_is_disabled(elasticsearch):
@@ -136,7 +145,8 @@ def test_elasticsearch_search_points_is_disabled(elasticsearch):
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
-                                       'bool': {'filter': [{"term": {"is_disabled": True}}]}}})
+                                       'bool': {"must_not": [{"term": {"unpublished": True}}],
+                                                'filter': [{"term": {"is_disabled": True}}]}}})
 
 
 def test_elasticsearch_get_points(elasticsearch):
@@ -148,9 +158,11 @@ def test_elasticsearch_get_points(elasticsearch):
     search_mock.assert_called_with(index='wiaty', body={
         "query": {
             "bool": {
-                "must": {
-                    "match_all": {}
-                },
+                "must_not": [{
+                    "term": {
+                        "unpublished": True
+                    }
+                }],
                 "filter": [{
                     "geo_bounding_box": {
                         "validation_method": "COERCE",
@@ -182,9 +194,11 @@ def test_elasticsearch_get_points_point_type(elasticsearch):
     search_mock.assert_called_with(index='wiaty', body={
         "query": {
             "bool": {
-                "must": {
-                    "match_all": {}
-                },
+                "must_not": [{
+                    "term": {
+                        "unpublished": True
+                    }
+                }],
                 "filter": [{
                     "geo_bounding_box": {
                         "validation_method": "COERCE",
@@ -297,7 +311,8 @@ def test_changePointName(point_from_dict):
     changes = point_from_dict.modify(name="changed name", description=NotDefined(), directions=NotDefined(),
                                      lat=NotDefined(), lon=NotDefined(), point_type=NotDefined(),
                                      water_exists=NotDefined(), fire_exists=NotDefined(), water_comment=NotDefined(),
-                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined())
+                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined(),
+                                     unpublished=NotDefined())
     assert changes == {'name': {'new_value': 'changed name', 'old_value': 'Góry Wałbrzyskie, masyw Chełmca'}}
 
 
@@ -305,7 +320,8 @@ def test_changePointLat(point_from_dict):
     changes = point_from_dict.modify(name=NotDefined(), description=NotDefined(), directions=NotDefined(),
                                      lat="49", lon=NotDefined(), point_type=NotDefined(),
                                      water_exists=NotDefined(), fire_exists=NotDefined(), water_comment=NotDefined(),
-                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined())
+                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined(),
+                                     unpublished=NotDefined())
     assert changes == {'lat': {'new_value': '49', 'old_value': '50.763923'}}
 
 

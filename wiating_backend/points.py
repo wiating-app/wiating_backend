@@ -41,19 +41,37 @@ def modify_point(user):
     logger.info('modify_point')
     sub = user['sub']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
-                           description=req_json.get('description', NotDefined()),
-                           directions=req_json.get('directions', NotDefined()),
-                           lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined
-                           else NotDefined(),
-                           lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined
-                           else NotDefined(),
-                           point_type=req_json.get('type', NotDefined()),
-                           water_exists=req_json.get('water_exists', NotDefined()),
-                           water_comment=req_json.get('water_comment', NotDefined()),
-                           fire_exists=req_json.get('fire_exists', NotDefined()),
-                           fire_comment=req_json.get('fire_comment', NotDefined()),
-                           is_disabled=req_json.get('is_disabled', NotDefined()), user_sub=sub)
+    if user.get('is_moderator'):
+        return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
+                               description=req_json.get('description', NotDefined()),
+                               directions=req_json.get('directions', NotDefined()),
+                               lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               point_type=req_json.get('type', NotDefined()),
+                               water_exists=req_json.get('water_exists', NotDefined()),
+                               water_comment=req_json.get('water_comment', NotDefined()),
+                               fire_exists=req_json.get('fire_exists', NotDefined()),
+                               fire_comment=req_json.get('fire_comment', NotDefined()),
+                               is_disabled=req_json.get('is_disabled', NotDefined()),
+                               unpublished=req_json.get('unpublished', NotDefined()), user_sub=sub)
+    else:
+        return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
+                               description=req_json.get('description', NotDefined()),
+                               directions=req_json.get('directions', NotDefined()),
+                               lat=str(req_json['lat']) if type(req_json.get('lat', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               lon=str(req_json['lon']) if type(req_json.get('lon', NotDefined())) is not NotDefined
+                               else NotDefined(),
+                               point_type=req_json.get('type', NotDefined()),
+                               water_exists=req_json.get('water_exists', NotDefined()),
+                               water_comment=req_json.get('water_comment', NotDefined()),
+                               fire_exists=req_json.get('fire_exists', NotDefined()),
+                               fire_comment=req_json.get('fire_comment', NotDefined()),
+                               is_disabled=req_json.get('is_disabled', NotDefined()),
+                               unpublished=NotDefined(),
+                               user_sub=sub)
 
 
 @points.route('/search_points', methods=['POST'])
@@ -105,3 +123,12 @@ def report(user):
         return Response(status=503)
     except AttributeError:
         return Response(status=400, response="Report reason and location ID required")
+
+
+@points.route('/get_unpublished', methods=['POST'])
+@requires_auth
+@moderator
+def get_unpublished(user):
+    params = request.json
+    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    es.get_unpublished(size=25, offset=0)

@@ -10,7 +10,7 @@ class Point:
     def __init__(self, name, description, directions, lat, lon, point_type, created_by, last_modified_by,
                  water_exists=None, fire_exists=None, water_comment=None, fire_comment=None, doc_id=None,
                  created_timestamp=None, last_modified_timestamp=None, images=None, is_disabled=False,
-                 report_reason=None):
+                 report_reason=None, unpublished=None):
         self.name = name
         self.description = description
         self.directions = directions
@@ -30,6 +30,7 @@ class Point:
         self.images = images
         self.is_disabled = is_disabled
         self.report_reason = report_reason
+        self.unpublished = unpublished
 
     @classmethod
     def new_point(cls, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
@@ -49,7 +50,7 @@ class Point:
                    last_modified_timestamp=source['last_modified_timestamp'],
                    last_modified_by=source['last_modified_by'], images=source.get('images'),
                    is_disabled=source.get('is_disabled', False), report_reason=source.get('report_reason'),
-                   doc_id=body['_id'])
+                   unpublished=source.get('unpublished'), doc_id=body['_id'])
 
     def to_dict(self, with_id=False):
         body = {
@@ -82,6 +83,7 @@ class Point:
         body = self.to_dict()
         body["created_by"] = self.created_by
         body["last_modified_by"] = self.last_modified_by
+        body["unpublished"] = self.unpublished
         if self.images is not None:
             body['images'] = list()
             for image in self.images:
@@ -90,7 +92,7 @@ class Point:
         return body
 
     def modify(self, name, description, directions, lat, lon, point_type, water_exists, fire_exists, water_comment,
-               fire_comment, is_disabled, user_sub):
+               fire_comment, is_disabled, unpublished, user_sub):
         params = locals()
         params.pop('self')
         params.pop('user_sub')
@@ -139,7 +141,13 @@ class Elasticsearch:
                       is_disabled=None, report_reason=None):
         body = {
             "query": {
-                "bool": {}
+                "bool": {
+                    "must_not": [{
+                        "term": {
+                            "unpublished": True
+                        }
+                    }],
+                }
             }
         }
         if phrase is not None:
@@ -199,9 +207,11 @@ class Elasticsearch:
         body = {
             "query": {
                 "bool": {
-                    "must": {
-                        "match_all": {}
-                    },
+                    "must_not": [{
+                        "term": {
+                            "unpublished": True
+                        }
+                    }],
                     "filter": [{
                         "geo_bounding_box": {
                             "validation_method": "COERCE",
@@ -235,6 +245,23 @@ class Elasticsearch:
         response = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=response)
         return point.to_dict(with_id=True)
+
+    def get_unpublished(self, size=25, offset=0):
+        body = {
+            "query": {
+                "term": {
+                    "unpublished": True
+                }
+            },
+            "sort":
+                [{"last_modified_timestamp": {"order": "desc"}}],
+            "from": offset,
+            "size": size
+        }
+        response = self.es.search(index=self.index, body=body)
+        read_points = list(map(Point.from_dict, response['hits']['hits']))
+        out_points = [point.to_dict(with_id=True) for point in read_points]
+        return {'points': out_points}
 
     def get_user_logs(self, user, size=25, offset=0):
         body = {
@@ -287,13 +314,13 @@ class Elasticsearch:
         return False
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
-                     point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled):
+                     point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled, unpublished):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)
         changes = point.modify(name=name, description=description, directions=directions, lat=lat, lon=lon,
                                point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                                fire_exists=fire_exists, fire_comment=fire_comment, is_disabled=is_disabled,
-                               user_sub=user_sub)
+                               unpublished=unpublished, user_sub=user_sub)
         res = self.es.index(index=self.index, id=point_id, body=point.to_index())
         if res['result'] == 'updated':
             if changes != {}:
