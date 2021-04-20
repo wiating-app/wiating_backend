@@ -131,4 +131,4 @@ def report(user):
 def get_unpublished(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    es.get_unpublished(size=25, offset=0)
+    return es.get_unpublished(size=25, offset=0)
