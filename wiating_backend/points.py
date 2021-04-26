@@ -139,6 +139,6 @@ def report(user):
 @requires_auth
 @moderator
 def get_unpublished(user):
-    params = request.json if request.json else dict()
+    params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.get_unpublished(size=params.get('size', 25), offset=params.get('offset', 25))
+    return es.get_unpublished(size=params.get('size', 25), offset=params.get('offset', 0))
