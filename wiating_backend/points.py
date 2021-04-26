@@ -1,5 +1,5 @@
 from flask import Blueprint, current_app, request, Response
-from .auth import requires_auth, moderator
+from .auth import allows_auth, moderator, requires_auth
 from .elastic import Elasticsearch, NotDefined
 from .image import delete_image_directory
 from .logging import logger
@@ -8,16 +8,23 @@ points = Blueprint('points', __name__, )
 
 
 @points.route('/get_points', methods=['POST'])
-def get_points():
+@allows_auth
+def get_points(user):
     req_json = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    if user is not None and user.get('is_moderator'):
+        return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'),
+                             is_moderator=True)
     return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'))
 
 
 @points.route('/get_point', methods=['POST'])
-def get_point():
+@allows_auth
+def get_point(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+    if user is not None and user.get('is_moderator'):
+        return es.get_point(point_id=params['id'], is_moderator=True)
     return es.get_point(point_id=params['id'])
 
 
@@ -26,12 +33,13 @@ def get_point():
 def add_point(user):
     req_json = request.json
     sub = user['sub']
+    is_moderator = user['is_moderator']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
                         lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
                         water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
                         fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
-                        is_disabled=req_json.get('is_disabled', False), user_sub=sub)
+                        is_disabled=req_json.get('is_disabled', False), user_sub=sub, is_moderator=is_moderator)
 
 
 @points.route('/modify_point', methods=['POST'])
@@ -40,6 +48,7 @@ def modify_point(user):
     req_json = request.json
     logger.info('modify_point')
     sub = user['sub']
+    is_moderator = user['is_moderator']
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
     if user.get('is_moderator'):
         return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
@@ -55,7 +64,8 @@ def modify_point(user):
                                fire_exists=req_json.get('fire_exists', NotDefined()),
                                fire_comment=req_json.get('fire_comment', NotDefined()),
                                is_disabled=req_json.get('is_disabled', NotDefined()),
-                               unpublished=req_json.get('unpublished', NotDefined()), user_sub=sub)
+                               unpublished=req_json.get('unpublished', NotDefined()), user_sub=sub,
+                               is_moderator=is_moderator)
     else:
         return es.modify_point(point_id=req_json['id'], name=req_json.get('name', NotDefined()),
                                description=req_json.get('description', NotDefined()),
@@ -71,7 +81,7 @@ def modify_point(user):
                                fire_comment=req_json.get('fire_comment', NotDefined()),
                                is_disabled=req_json.get('is_disabled', NotDefined()),
                                unpublished=NotDefined(),
-                               user_sub=sub)
+                               user_sub=sub, is_moderator=is_moderator)
 
 
 @points.route('/search_points', methods=['POST'])
@@ -131,4 +141,4 @@ def report(user):
 def get_unpublished(user):
     params = request.json
     es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.get_unpublished(size=25, offset=0)
+    return es.get_unpublished(size=params.get('size', 25), offset=params.get('offset', 25))

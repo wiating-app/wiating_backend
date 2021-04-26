@@ -52,7 +52,7 @@ class Point:
                    is_disabled=source.get('is_disabled', False), report_reason=source.get('report_reason'),
                    unpublished=source.get('unpublished'), doc_id=body['_id'])
 
-    def to_dict(self, with_id=False):
+    def to_dict(self, with_id=False, moderator=False):
         body = {
             "name": self.name,
             "description": self.description,
@@ -73,6 +73,8 @@ class Point:
         }
         if with_id is True:
             body["id"] = self.doc_id
+        if moderator is True:
+            body["unpublished"] = self.unpublished
         if self.images is not None:
             body['images'] = list()
             for image in self.images:
@@ -203,15 +205,10 @@ class Elasticsearch:
         out_points = [point.to_dict(with_id=True) for point in read_points]
         return {'points': out_points}
 
-    def get_points(self, top_right, bottom_left, point_type=None):
+    def get_points(self, top_right, bottom_left, point_type=None, is_moderator=False):
         body = {
             "query": {
                 "bool": {
-                    "must_not": [{
-                        "term": {
-                            "unpublished": True
-                        }
-                    }],
                     "filter": [{
                         "geo_bounding_box": {
                             "validation_method": "COERCE",
@@ -231,6 +228,9 @@ class Elasticsearch:
             },
             "size": 9000
         }
+        if not is_moderator:
+            add_to_or_create_list(location=body['query']['bool'], name='must_not',
+                                  query={"term": {"unpublished": True}})
         if point_type not in [None, []]:
             body['query']['bool']['minimum_should_match'] = 1
             for ptype in point_type:
@@ -238,13 +238,13 @@ class Elasticsearch:
                                       query={"term": {"type": {"value": ptype}}})
         response = self.es.search(index=self.index, body=body)
         read_points = list(map(Point.from_dict, response['hits']['hits']))
-        out_points = [point.to_dict(with_id=True) for point in read_points]
+        out_points = [point.to_dict(with_id=True, moderator=is_moderator) for point in read_points]
         return {'points': out_points}
 
-    def get_point(self, point_id):
+    def get_point(self, point_id, is_moderator=False):
         response = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=response)
-        return point.to_dict(with_id=True)
+        return point.to_dict(with_id=True, moderator=is_moderator)
 
     def get_unpublished(self, size=25, offset=0):
         body = {
@@ -314,7 +314,8 @@ class Elasticsearch:
         return False
 
     def modify_point(self, point_id, user_sub, name, description, directions, lat, lon,
-                     point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled, unpublished):
+                     point_type, water_exists, fire_exists, water_comment, fire_comment, is_disabled, unpublished,
+                     is_moderator=False):
         body = self.es.get(index=self.index, id=point_id)
         point = Point.from_dict(body=body)
         changes = point.modify(name=name, description=description, directions=directions, lat=lat, lon=lon,
@@ -325,7 +326,7 @@ class Elasticsearch:
         if res['result'] == 'updated':
             if changes != {}:
                 self.save_log(user_sub=user_sub, doc_id=point_id, name=point.name, changed=changes)
-            return self.get_point(point_id=point_id)
+            return self.get_point(point_id=point_id, is_moderator=is_moderator)
         return res
 
     def report_moderator(self, point_id, report_reason):
@@ -345,7 +346,7 @@ class Elasticsearch:
             return True
 
     def add_point(self, name, description, directions, lat, lon, point_type, user_sub, water_exists=None,
-                  fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False):
+                  fire_exists=None, water_comment=None, fire_comment=None, is_disabled=False, is_moderator=False):
         point = Point.new_point(name=name, description=description, directions=directions, lat=lat,
                                 lon=lon, point_type=point_type, water_exists=water_exists, water_comment=water_comment,
                                 fire_exists=fire_exists, fire_comment=fire_comment, is_disabled=is_disabled,
@@ -353,7 +354,7 @@ class Elasticsearch:
         res = self.es.index(index=self.index, body=point.to_index())
         if res['result'] == 'created':
             self.save_log(user_sub=user_sub, doc_id=res['_id'], name=point.name, changed={"action": "created"})
-            return self.get_point(point_id=res['_id'])
+            return self.get_point(point_id=res['_id'], is_moderator=is_moderator)
         return res
 
     def delete_point(self, point_id):
