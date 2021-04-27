@@ -1,9 +1,14 @@
 =======
 History
 =======
+1.8.0 (2021-04-27)
+------------------
+* Unpublished feature
+
 1.7.2 (2020-12-10)
 ------------------
 * Fix get_log HTTP 500
+* Adjust to new is_moderator check
 
 1.7.1 (2020-12-09)
 ------------------
