@@ -1,21 +1,28 @@
+from typing import List, Optional
+
+from fastapi import Depends
 from flask import Blueprint, current_app, request, Response
+
 from .auth import allows_auth, moderator, requires_auth
-from .elastic import Elasticsearch, NotDefined
+from .elastic import BasePoint, Elasticsearch, NotDefined, Location
 from .image import delete_image_directory
 from .logging import logger
 
 points = Blueprint('points', __name__, )
 
 
-@points.route('/get_points', methods=['POST'])
-@allows_auth
-def get_points(user):
-    req_json = request.json
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    if user is not None and user.get('is_moderator'):
-        return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'),
-                             is_moderator=True)
-    return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'))
+from fastapi import APIRouter
+
+points_router = APIRouter()
+
+
+@points_router.post('/get_points')
+# @allows_auth
+def get_points(top_right: Location, bottom_left: Location, point_type: Optional[List[str]] = None, es: dict = Depends(Elasticsearch.connection)):
+    # if user is not None and user.get('is_moderator'):
+    #     return es.get_points(req_json['top_right'], req_json['bottom_left'], req_json.get('point_type'),
+    #                          is_moderator=True)
+    return es.get_points(top_right, bottom_left, point_type)
 
 
 @points.route('/get_point', methods=['POST'])
@@ -28,18 +35,14 @@ def get_point(user):
     return es.get_point(point_id=params['id'])
 
 
-@points.route('/add_point', methods=['POST'])
-@requires_auth
-def add_point(user):
-    req_json = request.json
-    sub = user['sub']
-    is_moderator = user['is_moderator']
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    return es.add_point(name=req_json['name'], description=req_json['description'], directions=req_json['directions'],
-                        lat=req_json['lat'], lon=req_json['lon'], point_type=req_json['type'],
-                        water_exists=req_json.get('water_exists'), water_comment=req_json.get('water_comment'),
-                        fire_exists=req_json.get('fire_exists'), fire_comment=req_json.get('fire_comment'),
-                        is_disabled=req_json.get('is_disabled', False), user_sub=sub, is_moderator=is_moderator)
+@points_router.post('/add_point')
+# @requires_auth
+def add_point(point: BasePoint, es: dict = Depends(Elasticsearch.connection)):
+    return es.add_point(name=point.name, description=point.description, directions=point.directions,
+                        lat=point.location.lat, lon=point.location.lon, type=point.type,
+                        water_exists=point.water_exists, water_comment=point.water_comment,
+                        fire_exists=point.fire_exists, fire_comment=point.fire_comment,
+                        is_disabled=point.is_disabled, user_sub="abc", is_moderator=False)
 
 
 @points.route('/modify_point', methods=['POST'])
