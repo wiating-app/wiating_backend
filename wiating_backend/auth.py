@@ -3,7 +3,6 @@ from functools import wraps
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
 from fastapi import Header, HTTPException
-from flask import current_app, Response
 from redis import Redis
 
 from wiating_backend.config import DefaultConfig
@@ -81,9 +80,9 @@ def requires_auth(f):
         try:
             user = check_permissions()
         except Auth0Error:
-            return Response("Forbidden", 403)
+            raise HTTPException(detail="Forbidden", status_code=403)
         except AuthError:
-            return Response("Malformed token", 400)
+            raise HTTPException(detail="Malformed token", status_code=400)
         return f(*args, **kwargs, user=user)
     return decorated
 
@@ -125,7 +124,7 @@ def moderator(f):
             if kwargs['user']['is_moderator']:
                 return f(*args, **kwargs)
         except KeyError:
-            return Response("Forbidden", 403)
-        return Response("Forbidden", 403)
+            raise HTTPException(detail="Forbidden", status_code=403)
+        raise HTTPException(detail="Forbidden", status_code=403)
 
     return decorated

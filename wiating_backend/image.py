@@ -5,7 +5,7 @@ import shutil
 
 import boto3
 from botocore.exceptions import ClientError
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from image_resizer import resize_image
 from werkzeug.utils import secure_filename
 
@@ -19,7 +19,7 @@ config = DefaultConfig()
 
 
 @images.post('/add_image/{point_id}')
-def add_image(point_id: str, file: UploadFile, es: dict = Depends(Elasticsearch.connection),
+def add_image(point_id: str, file: UploadFile = File(...), es: dict = Depends(Elasticsearch.connection),
               user: dict = Depends(require_auth)):
     sub = user['sub']
     # check if the post request has the file part

@@ -257,12 +257,12 @@ class Elasticsearch:
                 "geo_bounding_box": {
                     "location": {
                         "top_left": {
-                            "lat": str(top_right['lat']),
-                            "lon": str(bottom_left['lon'])
+                            "lat": str(top_right.lat),
+                            "lon": str(bottom_left.lon)
                         },
                         "bottom_right": {
-                            "lat": str(bottom_left['lat']),
-                            "lon": str(top_right['lon'])
+                            "lat": str(bottom_left.lat),
+                            "lon": str(top_right.lon)
                         }
                     }
                 }

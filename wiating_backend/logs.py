@@ -1,70 +1,53 @@
-from flask import Blueprint, current_app, request, Response
-from .auth import requires_auth, moderator
+from fastapi import APIRouter, Depends, HTTPException
+
+from .auth import require_auth, require_moderator
 from .elastic import Elasticsearch
 
 
-logs = Blueprint('logs', __name__, )
+logs = APIRouter()
 
 
-@logs.route('/get_user_logs', methods=['POST'])
-@requires_auth
-def get_user_logs(user):
-    params = request.json
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    try:
-        size = params.get('size', 25)
-        offset = params.get('offset', 0)
-        return es.get_user_logs(user=user['sub'], size=size, offset=offset)
-    except AttributeError:
-        return es.get_user_logs(user=user['sub'])
+@logs.get('/get_user_logs')
+def get_user_logs(size: int = 25, offset: int = 0, es: dict = Depends(Elasticsearch.connection),
+                  user: dict = Depends(require_auth)):
+    return es.get_user_logs(user=user['sub'], size=size, offset=offset)
 
 
-@logs.route('/get_logs', methods=['POST'])
-@requires_auth
-@moderator
-def get_logs(user):
-    params = request.json
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    try:
-        size = params.get('size', 25)
-        offset = params.get('offset', 0)
-        reviewed_at = params.get('reviewed_at')
-        return es.get_logs(point_id=params.get('id'), size=size, offset=offset, reviewed_at=reviewed_at)
-    except AttributeError:
-        return es.get_logs()
+@logs.get('/get_logs', dependencies=[Depends(require_moderator)])
+def get_logs(size: int = 25, offset: int = 0, reviewed_at: bool = None, es: dict = Depends(Elasticsearch.connection)):
+    return es.get_logs(size=size, offset=offset, reviewed_at=reviewed_at)
 
 
-@logs.route('/get_log', methods=['POST'])
-@requires_auth
-def get_log(user):
-    params = request.json
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+@logs.get('/get_logs/{point_id}', dependencies=[Depends(require_moderator)])
+def get_logs_point(point_id: str, size: int = 25, offset: int = 0, reviewed_at: bool = None,
+             es: dict = Depends(Elasticsearch.connection)):
+    return es.get_logs(point_id=point_id, size=size, offset=offset, reviewed_at=reviewed_at)
+
+
+@logs.get('/get_log/{log_id}')
+def get_log(log_id: str, user: dict = Depends(require_auth), es: dict = Depends(Elasticsearch.connection)):
     try:
         if user.get('is_moderator'):
-            return es.get_log(log_id=params['log_id'])
+            return es.get_log(log_id=log_id)
         else:
-            log = es.get_log(log_id=params['log_id'])
+            log = es.get_log(log_id=log_id)
             if log['modified_by'] == user['sub']:
                 return log
             else:
-                return Response(status=403)
+                raise HTTPException(status_code=403)
     except IndexError:
-        return Response("Log not found", 404)
+        raise HTTPException(detail="Log not found", status_code=404)
     except AttributeError:
-        return Response(status=400, response="Log ID required")
+        raise HTTPException(status_code=400, detail="Log ID required")
 
 
-@logs.route('/log_reviewed', methods=['POST'])
-@requires_auth
-@moderator
-def log_reviewed(user):
-    params = request.json
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
+@logs.post('/log_reviewed/{log_id}')
+def log_reviewed(log_id: str, user: dict = Depends(require_moderator), es: dict = Depends(Elasticsearch.connection)):
     try:
-        result = es.log_reviewed(params['log_id'], user['sub'])
+        result = es.log_reviewed(log_id, user['sub'])
         if result:
             return result
         else:
-            return Response(status=500, response="Database error")
+            raise HTTPException(status_code=500, detail="Database error")
     except (KeyError, IndexError):
-        return Response(status=400, response="Existing log ID required")
+        raise HTTPException(status_code=400, detail="Existing log ID required")
