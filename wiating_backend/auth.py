@@ -74,19 +74,6 @@ def check_permissions(token, config: DefaultConfig = DefaultConfig()):
         'is_moderator': True if int(is_moderator) == 1 else False}
 
 
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            user = check_permissions()
-        except Auth0Error:
-            raise HTTPException(detail="Forbidden", status_code=403)
-        except AuthError:
-            raise HTTPException(detail="Malformed token", status_code=400)
-        return f(*args, **kwargs, user=user)
-    return decorated
-
-
 def require_auth(authorization: str = Header(None)):
     try:
         token = get_token_auth_header(authorization=authorization)
@@ -115,16 +102,3 @@ def allow_auth(authorization: str = Header(None)):
         return user
     except:
         return None
-
-
-def moderator(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            if kwargs['user']['is_moderator']:
-                return f(*args, **kwargs)
-        except KeyError:
-            raise HTTPException(detail="Forbidden", status_code=403)
-        raise HTTPException(detail="Forbidden", status_code=403)
-
-    return decorated
