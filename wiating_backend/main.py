@@ -2,10 +2,10 @@ from typing import Optional
 
 from fastapi import FastAPI
 
-from .points import points_router
+from .points import points
 
 app = FastAPI()
-app.include_router(points_router)
+app.include_router(points)
 
 @app.get('/healthz')
 def healthz():

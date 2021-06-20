@@ -1,5 +1,6 @@
 fastapi==0.65.2
 uvicorn[standard]==0.14.0
+python-multipart
 flask==1.1.2
 flask_cors==3.0.9
 python-dotenv==0.15.0
@@ -11,3 +12,4 @@ boto3==1.16.18
 elasticsearch==7.10.0
 Flask-gzip==0.2
 redis==3.5.3
+remote_pdb
