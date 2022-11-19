@@ -1,98 +1,90 @@
-import boto3
-from botocore.exceptions import ClientError
 import datetime
 import hashlib
 import os
 import shutil
+
+import boto3
+from botocore.exceptions import ClientError
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from image_resizer import resize_image
 from werkzeug.utils import secure_filename
 
-from flask import Blueprint, current_app, redirect, request, Response
-
-from .auth import moderator, requires_auth
+from .auth import require_auth, require_moderator
+from .config import DefaultConfig
 from .elastic import Elasticsearch
 
 
-from image_resizer import resize_image
+images = APIRouter()
+config = DefaultConfig()
 
 
-images = Blueprint('images', __name__)
-
-
-@images.route('/add_image/<point_id>', methods=['POST'])
-@requires_auth
-def add_image(point_id, user):
+@images.post('/add_image/{point_id}')
+def add_image(point_id: str, file: UploadFile = File(...), es: dict = Depends(Elasticsearch.connection),
+              user: dict = Depends(require_auth)):
     sub = user['sub']
     # check if the post request has the file part
-    if 'file' not in request.files:
-        return redirect(request.url)
-    file = request.files['file']
     # if user does not select file, browser also
     # submit an empty part without filename
     if file.filename == '':
-        return redirect(request.url)
+        raise HTTPException(status_code=400)
     if file and allowed_file(file.filename):
         filename = get_new_file_name(file)
         create_image_directory(point_id)
         upload_file(file, os.path.join(point_id, filename))
         resize_image.delay(os.path.join(point_id, filename))
-        es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
         try:
             res = es.add_image(point_id, filename, sub)
             return res
         except KeyError:
-            return Response(status=400)
+            raise HTTPException(status_code=400)
 
 
-@images.route('/delete_image', methods=['POST'])
-@requires_auth
-@moderator
-def delete_image(user):
-    params = request.json
+@images.delete('/delete_image/{point_id}/{image_name}')
+def delete_image(point_id: str, image_name: str, es: dict = Depends(Elasticsearch.connection),
+                 user: dict = Depends(require_moderator)):
     sub = user['sub']
-    es = Elasticsearch(current_app.config['ES_CONNECTION_STRING'], index=current_app.config['INDEX_NAME'])
-    es.delete_image(point_id=params['id'], image_name=params['image_name'], sub=sub)
-    delete_image_file(point_id=params['id'], image_name=params['image_name'])
-    return Response(status=200)
+    es.delete_image(point_id=point_id, image_name=image_name, sub=sub)
+    delete_image_file(point_id=point_id, image_name=image_name)
 
 
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in config.ALLOWED_EXTENSIONS
 
 
 def delete_image_directory(path):
-    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+    store_property = config.STORE_PROPERTY.split('//', 1)[1]
 
-    if current_app.config['STORE_PROPERTY'].startswith('file://'):
+    if config.STORE_PROPERTY.startswith('file://'):
         try:
             shutil.rmtree(os.path.join(store_property, path))
         except FileNotFoundError:
             pass
-    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+    elif config.STORE_PROPERTY.startswith('s3://'):
         # TODO delete S3 directory
         pass
 
 
 def delete_image_file(point_id, image_name):
-    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+    store_property = config.STORE_PROPERTY.split('//', 1)[1]
     file_name, file_extension = image_name.rsplit('.', 1)
 
-    if current_app.config['STORE_PROPERTY'].startswith('file://'):
+    if config.STORE_PROPERTY.startswith('file://'):
         os.remove(os.path.join(store_property, point_id, image_name))
         os.remove(os.path.join(store_property, point_id, file_name + '_m.' + file_extension))
-    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+    elif config.STORE_PROPERTY.startswith('s3://'):
         # TODO delete S3 images
         pass
 
 
 def create_image_directory(path):
-    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+    store_property = config.STORE_PROPERTY.split('//', 1)[1]
 
-    if current_app.config['STORE_PROPERTY'].startswith('file://'):
+    if config.STORE_PROPERTY.startswith('file://'):
         try:
             os.mkdir(os.path.join(store_property, path))
         except FileExistsError:
             pass
-    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+    elif config.STORE_PROPERTY.startswith('s3://'):
         try:
             s3_client = boto3.client('s3')
             s3_client.put_object(Bucket=store_property, Key=(path + '/'))
@@ -101,11 +93,12 @@ def create_image_directory(path):
 
 
 def upload_file(file_object, filename):
-    store_property = current_app.config['STORE_PROPERTY'].split('//', 1)[1]
+    store_property = config.STORE_PROPERTY.split('//', 1)[1]
 
-    if current_app.config['STORE_PROPERTY'].startswith('file://'):
-        file_object.save(os.path.join(store_property, filename))
-    elif current_app.config['STORE_PROPERTY'].startswith('s3://'):
+    if config.STORE_PROPERTY.startswith('file://'):
+        with open(os.path.join(store_property, filename), 'wb') as write_file:
+            write_file.write(file_object.file.read())
+    elif config.STORE_PROPERTY.startswith('s3://'):
         try:
             s3_client = boto3.client('s3')
             s3_client.upload_fileobj(file_object, store_property, filename,

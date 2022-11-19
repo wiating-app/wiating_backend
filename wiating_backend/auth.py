@@ -1,10 +1,12 @@
+from functools import wraps
+
 from auth0.v3 import Auth0Error
 from auth0.v3.authentication import Users
-from wiating_backend.constants import APP_METADATA_KEY, MODERATOR
-from flask import current_app, request, Response
-from functools import wraps
+from fastapi import Header, HTTPException
 from redis import Redis
 
+from wiating_backend.config import DefaultConfig
+from wiating_backend.constants import APP_METADATA_KEY, MODERATOR
 
 # Error handler
 class AuthError(Exception):
@@ -13,16 +15,15 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-def get_token_auth_header():
+def get_token_auth_header(authorization):
     """Obtains the Access Token from the Authorization Header
     """
-    auth = request.headers.get("Authorization", None)
-    if not auth:
+    if not authorization:
         raise AuthError({"code": "authorization_header_missing",
                         "description":
                             "Authorization header is expected"}, 401)
 
-    parts = auth.split()
+    parts = authorization.split()
 
     if parts[0].lower() != "bearer":
         raise AuthError({"code": "invalid_header",
@@ -42,18 +43,18 @@ def get_token_auth_header():
     return token
 
 
-def check_permissions():
-    sub_key = f'{get_token_auth_header()}:sub'
-    moderator_key = f'{get_token_auth_header()}:moderator'
+def check_permissions(token, config: DefaultConfig = DefaultConfig()):
+    sub_key = f'{token}:sub'
+    moderator_key = f'{token}:moderator'
 
-    redis = Redis(host=current_app.config['REDIS_HOST'], port=int(current_app.config['REDIS_PORT']), db=0)
+    redis = Redis(host=config.REDIS_HOST, port=int(config.REDIS_PORT), db=0)
 
     sub = redis.get(sub_key)
     is_moderator = redis.get(moderator_key)
 
     if not sub or not is_moderator:
-        a0_users = Users(current_app.config['AUTH0_DOMAIN'])
-        a0_user = a0_users.userinfo(get_token_auth_header())
+        a0_users = Users(config.AUTH0_DOMAIN)
+        a0_user = a0_users.userinfo(token)
 
         sub = a0_user.get('sub')
         is_moderator = 0
@@ -61,7 +62,7 @@ def check_permissions():
         if a0_user.get(APP_METADATA_KEY):
             role = a0_user.get(APP_METADATA_KEY).get('role')
             if role == MODERATOR and \
-                current_app.config.get('INDEX_NAME') in a0_user.get(APP_METADATA_KEY).get('services'):
+                config.INDEX_NAME in a0_user.get(APP_METADATA_KEY).get('services'):
                 is_moderator = 1
 
         redis.set(sub_key, sub)
@@ -73,38 +74,31 @@ def check_permissions():
         'is_moderator': True if int(is_moderator) == 1 else False}
 
 
-def requires_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            user = check_permissions()
-        except Auth0Error:
-            return Response("Forbidden", 403)
-        except AuthError:
-            return Response("Malformed token", 400)
-        return f(*args, **kwargs, user=user)
-    return decorated
+def require_auth(authorization: str = Header(None)):
+    try:
+        token = get_token_auth_header(authorization=authorization)
+        user = check_permissions(token)
+        return user
+    except Auth0Error:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    except AuthError:
+        raise HTTPException(status_code=400, detail="Malformed token")
 
 
-def allows_auth(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            user = check_permissions()
-        except:
-            return f(*args, **kwargs, user=None)
-        return f(*args, **kwargs, user=user)
-    return decorated
+def require_moderator(authorization: str = Header(None)):
+    user = require_auth(authorization=authorization)
+    try:
+        if not user['is_moderator']:
+            raise HTTPException(status_code=403, detail="Forbidden")
+    except KeyError:
+        return HTTPException(status_code=403, detail="Forbidden")
+    return user
 
 
-def moderator(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try:
-            if kwargs['user']['is_moderator']:
-                return f(*args, **kwargs)
-        except KeyError:
-            return Response("Forbidden", 403)
-        return Response("Forbidden", 403)
-
-    return decorated
+def allow_auth(authorization: str = Header(None)):
+    try:
+        token = get_token_auth_header(authorization=authorization)
+        user = check_permissions(token)
+        return user
+    except:
+        return None
