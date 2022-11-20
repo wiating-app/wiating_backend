@@ -19,11 +19,11 @@ class Image(BaseModel):
 
 
 class BasePoint(BaseModel):
-    name: str
-    description: str
-    directions: str
-    location: Location
-    type: str
+    name: Optional[str] = None
+    description: Optional[str] = None
+    directions: Optional[str] = None
+    location: Optional[Location] = None
+    type: Optional[str] = None
     water_exists: Optional[bool] = None
     fire_exists: Optional[bool] = None
     water_comment: Optional[str] = None
@@ -34,7 +34,7 @@ class BasePoint(BaseModel):
     last_modified_timestamp: Optional[str] = None
     last_modified_by: Optional[str] = None
     images: List[Image] = None
-    is_disabled: bool
+    is_disabled: Optional[bool] = None
     report_reason: Optional[str]
     unpublished: Optional[bool] = None
 
@@ -179,14 +179,15 @@ class Point:
         params.pop('user_sub')
         changed = dict()
         for param in params.keys():
-            if getattr(self, param) != params[param]:
-                if param == 'point_type':
-                    log_param = 'type'
-                else:
-                    log_param = param
-                changed[log_param] = {'old_value': getattr(self, param),
-                                      'new_value': params[param]}
-            setattr(self, param, params[param])
+            if type(params[param]) is not NotDefined:
+                if getattr(self, param) != params[param]:
+                    if param == 'point_type':
+                        log_param = 'type'
+                    else:
+                        log_param = param
+                    changed[log_param] = {'old_value': getattr(self, param),
+                                          'new_value': params[param]}
+                setattr(self, param, params[param])
         self.last_modified_by = user_sub
         self.last_modified_timestamp = datetime.utcnow().strftime("%s")
         return changed
