@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .image import images
 from .logs import logs
@@ -12,6 +13,7 @@ app.include_router(images)
 app.include_router(logs)
 app.include_router(points)
 app.include_router(user_mgmt)
+app.mount("/images", StaticFiles(directory="/images"), name="images")
 
 origins = [
     "http://localhost",
