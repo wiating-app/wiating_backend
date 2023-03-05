@@ -1,7 +1,7 @@
 import datetime
 import pytest
 from unittest.mock import MagicMock
-from wiating_backend.elastic import Point, NotDefined, Elasticsearch
+from wiating_backend.elastic import Location, Point, NotDefined, Elasticsearch
 
 
 @pytest.fixture
@@ -94,7 +94,7 @@ def test_elasticsearch_search_points_top_right_bottom_left(elasticsearch):
     es = Elasticsearch('some string')
     search_mock = MagicMock()
     elasticsearch.return_value.search = search_mock
-    es.search_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111})
+    es.search_points(top_right=Location(lat=123, lon=321), bottom_left=Location(lat=222, lon=111))
 
     search_mock.assert_called_with(index='wiaty',
                                    body={'query': {
@@ -153,7 +153,7 @@ def test_elasticsearch_get_points(elasticsearch):
     es = Elasticsearch('some string')
     search_mock = MagicMock()
     elasticsearch.return_value.search = search_mock
-    es.get_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111})
+    es.get_points(top_right=Location(lat=123, lon=321), bottom_left=Location(lat=222, lon=111))
 
     search_mock.assert_called_with(index='wiaty', body={
         "query": {
@@ -188,7 +188,7 @@ def test_elasticsearch_get_points_point_type(elasticsearch):
     es = Elasticsearch('some string')
     search_mock = MagicMock()
     elasticsearch.return_value.search = search_mock
-    es.get_points(top_right={'lat': 123, 'lon': 321}, bottom_left={'lat': 222, 'lon': 111},
+    es.get_points(top_right=Location(lat=123, lon=321), bottom_left=Location(lat=222, lon=111),
                   point_type=["some", "types"])
 
     search_mock.assert_called_with(index='wiaty', body={
@@ -317,11 +317,9 @@ def test_changePointName(point_from_dict):
 
 
 def test_changePointLat(point_from_dict):
-    changes = point_from_dict.modify(name=NotDefined(), description=NotDefined(), directions=NotDefined(),
-                                     lat="49", lon=NotDefined(), point_type=NotDefined(),
-                                     water_exists=NotDefined(), fire_exists=NotDefined(), water_comment=NotDefined(),
-                                     fire_comment=NotDefined(), user_sub=NotDefined(), is_disabled=NotDefined(),
-                                     unpublished=NotDefined())
+    changes = point_from_dict.modify(name=None, description=None, directions=None, lat="49", lon=None, point_type=None,
+                                     water_exists=None, fire_exists=None, water_comment=None, fire_comment=None,
+                                     is_disabled=None, unpublished=None, user_sub=None)
     assert changes == {'lat': {'new_value': '49', 'old_value': '50.763923'}}
 
 

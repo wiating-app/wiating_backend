@@ -1,6 +1,7 @@
+from fastapi.testclient import TestClient
 import pytest
-from wiating_backend import create_app
-from wiating_backend.config import BaseConfig
+
+from wiating_backend.main import app
 
 
 @pytest.fixture
@@ -30,9 +31,6 @@ def env_mock(mocker):
 
     mocker.patch('wiating_backend.config.env', spec=env_mock)
 
-
 @pytest.fixture
-def app(env_mock):
-    test_config = BaseConfig()
-    app = create_app(test_config)
-    return app
+def client():
+    return TestClient(app)
