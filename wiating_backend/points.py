@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from .auth import allow_auth, require_auth, require_moderator
 from .elastic import BasePoint, Elasticsearch, Location, NotDefined
 from .image import delete_image_directory
-from .logging import logger
+from .logger import logger
 
 
 points = APIRouter()
@@ -43,19 +43,19 @@ def modify_point(point_id: str, point: BasePoint, es: dict = Depends(Elasticsear
     sub = user['sub']
     is_moderator = user['is_moderator']
     if is_moderator:
-        return es.modify_point(point_id=point_id, 
-                name=point.name if point.name is not None else NotDefined(), 
+        return es.modify_point(point_id=point_id,
+                name=point.name if point.name is not None else NotDefined(),
                 description=point.description if point.description is not None else NotDefined(),
-                directions=point.directions if point.directions is not None else NotDefined(), 
-                lat=str(point.location.lat) if point.location is not None else NotDefined(), 
+                directions=point.directions if point.directions is not None else NotDefined(),
+                lat=str(point.location.lat) if point.location is not None else NotDefined(),
                 lon=str(point.location.lon) if point.location is not None else NotDefined(),
-                point_type=point.type if point.type is not None else NotDefined(), 
+                point_type=point.type if point.type is not None else NotDefined(),
                 water_exists=point.water_exists if point.water_exists is not None else NotDefined(),
-                water_comment=point.water_comment if point.water_comment is not None else NotDefined(), 
+                water_comment=point.water_comment if point.water_comment is not None else NotDefined(),
                 fire_exists=point.fire_exists if point.fire_exists is not None else NotDefined(),
-                fire_comment=point.fire_comment if point.fire_comment is not None else NotDefined(), 
+                fire_comment=point.fire_comment if point.fire_comment is not None else NotDefined(),
                 is_disabled=point.is_disabled if point.is_disabled is not None else NotDefined(),
-                unpublished=point.unpublished if point.unpublished is not None else NotDefined(), 
+                unpublished=point.unpublished if point.unpublished is not None else NotDefined(),
                 user_sub=sub, is_moderator=is_moderator)
     else:
         return es.modify_point(point_id=point_id, name=point.name, description=point.description,
