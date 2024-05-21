@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:buster
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install -y curl git python3-pip python-setuptools python3-dev
