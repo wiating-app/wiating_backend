@@ -1,6 +1,6 @@
 fastapi==0.65.2
 uvicorn[standard]==0.14.0
-python-multipart==0.0.5
+python-multipart==0.0.7
 python-dotenv==0.15.0
 authlib==0.15.2
 six==1.15.0
