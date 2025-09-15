@@ -377,6 +377,42 @@ class Elasticsearch:
                                       query={"exists": {"field": "reviewed_at"}})
         response = self.es.search(index=self.index + '_*', body=body)
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
+    
+    def get_user_wrapped(self, user):
+        # if datetime.today().month > 2:
+        #     return {}
+        index = self.index + '_*_' + str(datetime.today().year-1)
+        body = {
+            "query": {
+                'term': {
+                    'modified_by.keyword':
+                        {'value': user}
+                }
+            },
+            "aggs":{
+                "all_modifications":{
+                    "terms":{
+                        "field":"modified_by.keyword",
+                        "size": 1000
+                    }
+                },
+                "user":{
+                    "filter": {
+                        "term": {
+                            "modified_by.keyword": "google-oauth2|111731859480038775413"
+                        }
+                    },
+                    "aggs":{
+                        "user":{
+                            "terms": {
+                                "field": "modified_by.keyword"
+                            }
+                        }
+                    }
+                }
+            },
+            "size": 0
+        }
 
     def _get_raw_log(self, log_id):
         body = {"query": {"term": {"_id": log_id}}}
