@@ -51,3 +51,17 @@ def log_reviewed(log_id: str, user: dict = Depends(require_moderator), es: dict 
             raise HTTPException(status_code=500, detail="Database error")
     except (KeyError, IndexError):
         raise HTTPException(status_code=400, detail="Existing log ID required")
+
+
+@logs.get('/wrapped/')
+def wrapped(user: dict = Depends(require_auth), es: dict = Depends(Elasticsearch.connection)):
+    if user is None:
+        raise HTTPException(status_code=401)
+    try:
+        result = es.get_user_wrapped(user=user['sub'])
+        if result:
+            return result
+        else:
+            return HTTPException(status_code=400)
+    except (KeyError, IndexError):
+        return HTTPException(status_code=400)
