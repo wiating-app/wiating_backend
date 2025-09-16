@@ -391,7 +391,7 @@ class Elasticsearch:
                 "user":{
                     "filter": {
                         "term": {
-                            "modified_by.keyword": "google-oauth2|115007072642438483707"
+                            "modified_by.keyword": user
                         }
                     },
                     "aggs":{
