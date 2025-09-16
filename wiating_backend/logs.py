@@ -57,4 +57,11 @@ def log_reviewed(log_id: str, user: dict = Depends(require_moderator), es: dict 
 def wrapped(user: dict = Depends(require_auth), es: dict = Depends(Elasticsearch.connection)):
     if user is None:
         raise HTTPException(status_code=401)
-    return es.get_user_wrapped(user=user['sub'])
+    try:
+        result = es.get_user_wrapped(user=user['sub'])
+        if result:
+            return result
+        else:
+            return HTTPException(status_code=400)
+    except (KeyError, IndexError):
+        return HTTPException(status_code=400)

@@ -379,16 +379,9 @@ class Elasticsearch:
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
     
     def get_user_wrapped(self, user):
-        # if datetime.today().month > 2:
-        #     return {}
-        index = self.index + '_*_' + str(datetime.today().year-1)
+        year = str(datetime.today().year-1)
+        index = self.index + '_*_' + year
         body = {
-            "query": {
-                'term': {
-                    'modified_by.keyword':
-                        {'value': user}
-                }
-            },
             "aggs":{
                 "all_modifications":{
                     "terms":{
@@ -399,13 +392,36 @@ class Elasticsearch:
                 "user":{
                     "filter": {
                         "term": {
-                            "modified_by.keyword": user
+                            "modified_by.keyword": "google-oauth2|115007072642438483707"
                         }
                     },
                     "aggs":{
-                        "user":{
-                            "terms": {
-                                "field": "modified_by.keyword"
+                        "created":{
+                            "filter": {
+                                "term":{
+                                    "changes.action": "created"
+                                },
+                            },
+                            "aggs": {
+                                "created_agg":{
+                                    "terms": {
+                                        "field": "changes"
+                                    }
+                                }
+                            }
+                        },
+                        "image":{
+                            "filter": {
+                                "exists":{
+                                    "field": "changes.images.new_value"
+                                },
+                            },
+                            "aggs": {
+                                "edit_agg":{
+                                    "terms": {
+                                        "field": "changes"
+                                    }
+                                }
                             }
                         }
                     }
@@ -413,6 +429,27 @@ class Elasticsearch:
             },
             "size": 0
         }
+        response = self.es.search(index=index, body=body)
+        try:
+            user_total = response["aggregations"]["user"]["doc_count"]
+            user_created = response["aggregations"]["user"]["created"]["doc_count"]
+            user_images = response["aggregations"]["user"]["image"]["doc_count"]
+            user_edits = user_total - user_created - user_images
+            all_modifications = response["aggregations"]["all_modifications"]["buckets"]
+            for user_stats in zip(range(0, len(all_modifications)), all_modifications):
+                if user_stats[1]["key"] == user:
+                    activity_percentage = 100.0 - user_stats[0]/len(all_modifications)
+                    break
+            return {
+                "user_total": user_total,
+                "user_created": user_created,
+                "user_images": user_images,
+                "user_edits": user_edits,
+                "activity_percentage": activity_percentage,
+                "year": year
+            }
+        except KeyError:
+            return None
 
     def _get_raw_log(self, log_id):
         body = {"query": {"term": {"_id": log_id}}}
