@@ -53,7 +53,7 @@ def log_reviewed(log_id: str, user: dict = Depends(require_moderator), es: dict 
         raise HTTPException(status_code=400, detail="Existing log ID required")
 
 
-@logs.get('/wrapped/')
+@logs.get('/wrapped')
 def wrapped(user: dict = Depends(require_auth), es: dict = Depends(Elasticsearch.connection)):
     if user is None:
         raise HTTPException(status_code=401)

@@ -409,7 +409,7 @@ class Elasticsearch:
                                 }
                             }
                         },
-                        "image":{
+                        "image": {
                             "filter": {
                                 "exists":{
                                     "field": "changes.images.new_value"
@@ -419,6 +419,20 @@ class Elasticsearch:
                                 "edit_agg":{
                                     "terms": {
                                         "field": "changes"
+                                    }
+                                }
+                            }
+                        }
+                        "top_doc": {
+                            "filter": {
+                                "exists": {
+                                    "field": "doc_id"
+                                }
+                            },
+                            "aggs": {
+                                "top_doc_agg": {
+                                    "terms": {
+                                        "field": "doc_id.keyword"
                                     }
                                 }
                             }
@@ -433,6 +447,10 @@ class Elasticsearch:
             user_total = response["aggregations"]["user"]["doc_count"]
             user_created = response["aggregations"]["user"]["created"]["doc_count"]
             user_images = response["aggregations"]["user"]["image"]["doc_count"]
+             try:
+                user_top_loc = response["aggregations"]["user"]["top_doc"]["top_doc_agg"]["buckets"][0]["key"]
+            except (KeyError, IndexError):
+                user_top_loc = None
             user_edits = user_total - user_created - user_images
             all_modifications = response["aggregations"]["all_modifications"]["buckets"]
             activity_percentage = 0.0
@@ -445,6 +463,7 @@ class Elasticsearch:
                 "user_created": user_created,
                 "user_images": user_images,
                 "user_edits": user_edits,
+                "user_top_loc": user_top_loc,
                 "activity_percentage": activity_percentage,
                 "year": year
             }
