@@ -378,7 +378,11 @@ class Elasticsearch:
         return {"logs": response['hits']['hits'], "total": response['hits']['total']['value']}
     
     def get_user_wrapped(self, user):
-        year = str(datetime.today().year-1)
+        now = datetime.now()
+        if now.month == 12:
+            year = now.year
+        else:
+            year = now.year - 1
         index = self.index + '_*_' + year
         body = {
             "aggs":{
