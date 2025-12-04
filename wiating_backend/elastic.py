@@ -383,7 +383,7 @@ class Elasticsearch:
             year = now.year
         else:
             year = now.year - 1
-        index = self.index + '_*_' + year
+        index = self.index + '_*_' + str(year)
         body = {
             "aggs":{
                 "all_modifications":{
