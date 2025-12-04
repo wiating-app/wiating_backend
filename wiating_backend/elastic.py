@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from elasticsearch import Elasticsearch as ES
+from elasticsearch.exceptions import NotFoundError
 from pydantic import BaseModel
 
 from .config import DefaultConfig
@@ -325,9 +326,12 @@ class Elasticsearch:
         return {'points': out_points}
 
     def get_point(self, point_id, is_moderator=False):
-        response = self.es.get(index=self.index, id=point_id)
-        point = Point.from_dict(body=response)
-        return point.to_dict(with_id=True, moderator=is_moderator)
+        try:
+            response = self.es.get(index=self.index, id=point_id)
+            point = Point.from_dict(body=response)
+            return point.to_dict(with_id=True, moderator=is_moderator)
+        except NotFoundError:
+            return None
 
     def get_unpublished(self, size=25, offset=0):
         body = {

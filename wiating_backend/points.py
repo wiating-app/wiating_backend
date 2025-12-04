@@ -23,8 +23,14 @@ def get_points(top_right: Location, bottom_left: Location, point_type: Optional[
 @points.get('/get_point/{point_id}')
 def get_point(point_id: str, es: dict = Depends(Elasticsearch.connection), user: dict = Depends(allow_auth)):
     if user is not None and user.get('is_moderator'):
-        return es.get_point(point_id=point_id, is_moderator=True)
-    return es.get_point(point_id=point_id)
+        result = es.get_point(point_id=point_id, is_moderator=True)
+    else:
+        result = es.get_point(point_id=point_id)
+    
+    if result is None:
+        raise HTTPException(status_code=404, detail="Point not found")
+    
+    return result
 
 
 @points.post('/add_point')
