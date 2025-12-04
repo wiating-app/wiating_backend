@@ -422,7 +422,7 @@ class Elasticsearch:
                                     }
                                 }
                             }
-                        }
+                        },
                         "top_doc": {
                             "filter": {
                                 "exists": {
