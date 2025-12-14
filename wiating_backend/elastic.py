@@ -457,8 +457,10 @@ class Elasticsearch:
             user_images = response["aggregations"]["user"]["image"]["doc_count"]
              try:
                 user_top_loc = response["aggregations"]["user"]["top_doc"]["top_doc_agg"]["buckets"][0]["key"]
+                user_top_loc_exists = self.get_point(user_top_loc)
             except (KeyError, IndexError):
                 user_top_loc = None
+                user_top_loc_exists = None
             user_edits = user_total - user_created - user_images
             all_modifications = response["aggregations"]["all_modifications"]["buckets"]
             activity_percentage = 0.0
@@ -466,7 +468,6 @@ class Elasticsearch:
                 if user_stats[1]["key"] == user:
                     activity_percentage = user_stats[0]/len(all_modifications)
                     break
-            user_top_loc_exists = self.get_point(user_top_loc)
             return {
                 "user_total": user_total,
                 "user_created": user_created,
