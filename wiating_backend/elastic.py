@@ -466,12 +466,13 @@ class Elasticsearch:
                 if user_stats[1]["key"] == user:
                     activity_percentage = user_stats[0]/len(all_modifications)
                     break
+            user_top_loc_exists = self.get_point(user_top_loc)
             return {
                 "user_total": user_total,
                 "user_created": user_created,
                 "user_images": user_images,
                 "user_edits": user_edits,
-                "user_top_loc": user_top_loc,
+                "user_top_loc": user_top_loc if user_top_loc_exists is not None else None,
                 "activity_percentage": activity_percentage,
                 "year": year
             }
