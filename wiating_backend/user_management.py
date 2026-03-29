@@ -7,7 +7,6 @@ from .auth import require_moderator
 from .config import DefaultConfig
 
 
-
 user_mgmt = APIRouter()
 config = DefaultConfig()
 

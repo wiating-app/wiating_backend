@@ -21,6 +21,8 @@ class BaseConfig:
         self.AUTH0_AUDIENCE = env.get(constants.AUTH0_AUDIENCE)
         if self.AUTH0_AUDIENCE == '':
             self.AUTH0_AUDIENCE = self.AUTH0_BASE_URL + '/userinfo'
+        
+        self.keycloak_secret_key = env.get(constants.KEYCLOAK_CLIENT_SECRET_KEY)
 
         self.STORE_PROPERTY = env.get(constants.S3_BUCKET)
         self.ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}

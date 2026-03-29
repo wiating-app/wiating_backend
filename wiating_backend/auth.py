@@ -8,6 +8,15 @@ from redis import Redis
 from wiating_backend.config import DefaultConfig
 from wiating_backend.constants import APP_METADATA_KEY, MODERATOR
 
+from keycloak import KeycloakOpenID
+from redis import Redis
+from wiating_backend.config import DefaultConfig
+
+keycloak_openid = KeycloakOpenID(server_url="http://keycloak:8080/",
+                                 client_id="wiating",
+                                 realm_name="wiating",
+                                 client_secret_key=DefaultConfig().keycloak_secret_key)
+
 # Error handler
 class AuthError(Exception):
     def __init__(self, error, status_code):
@@ -53,16 +62,14 @@ def check_permissions(token, config: DefaultConfig = DefaultConfig()):
     is_moderator = redis.get(moderator_key)
 
     if not sub or not is_moderator:
-        a0_users = Users(config.AUTH0_DOMAIN)
-        a0_user = a0_users.userinfo(token)
+        userinfo = keycloak_openid.userinfo(token)
 
-        sub = a0_user.get('sub')
+        sub = userinfo.get('sub')
         is_moderator = 0
 
-        if a0_user.get(APP_METADATA_KEY):
-            role = a0_user.get(APP_METADATA_KEY).get('role')
-            if role == MODERATOR and \
-                config.INDEX_NAME in a0_user.get(APP_METADATA_KEY).get('services'):
+        if 'roles' in userinfo:
+            roles = userinfo['roles']
+            if 'moderator' in roles:
                 is_moderator = 1
 
         redis.set(sub_key, sub)
@@ -71,7 +78,7 @@ def check_permissions(token, config: DefaultConfig = DefaultConfig()):
         redis.expire(moderator_key, 60)
 
     return {'sub': sub.decode() if isinstance(sub, bytes) else sub,
-        'is_moderator': True if int(is_moderator) == 1 else False}
+            'is_moderator': True if int(is_moderator) == 1 else False}
 
 
 def require_auth(authorization: str = Header(None)):
